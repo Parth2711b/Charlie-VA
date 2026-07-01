@@ -1,0 +1,40 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+
+# ── Personal data — NEVER commit these ────────────────────────────────────────
+data/memory.db
+data/contacts.json
+data/logs/
+
+# ── Model weights (too large for Git) ─────────────────────────────────────────
+models/
+*.pt
+*.onnx
+*.bin
+*.gguf
+*.llamafile
+
+# ── WhatsApp session data ─────────────────────────────────────────────────────
+User_Data/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# ── Temp / audio files ────────────────────────────────────────────────────────
+*.wav
+*.mp3
+*.tmp
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+

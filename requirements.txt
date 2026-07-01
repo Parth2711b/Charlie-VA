@@ -1,0 +1,40 @@
+# Charlie v2 — Python dependencies
+# Install: pip install -r requirements.txt
+# Python 3.11+ recommended
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0
+httpx>=0.27.0
+
+# ── Speech: STT ───────────────────────────────────────────────────────────────
+faster-whisper>=1.0.0
+pyaudio>=0.2.14
+
+# ── Speech: Wake Word ─────────────────────────────────────────────────────────
+openwakeword>=0.6.0
+
+# ── Speech: TTS (Piper is a binary — install separately, see README)
+# pyttsx3 is the Windows fallback only
+pyttsx3>=2.90
+
+# ── LLM ───────────────────────────────────────────────────────────────────────
+# Ollama itself is a binary — install from https://ollama.ai
+anthropic>=0.30.0          # Cloud LLM (optional — only if CLOUD_LLM_ENABLED=true)
+
+# ── Research ──────────────────────────────────────────────────────────────────
+duckduckgo-search>=6.0.0
+
+# ── Actions: WhatsApp ─────────────────────────────────────────────────────────
+pywhatkit>=5.4
+pyperclip>=1.9.0
+
+# ── Actions: Browser ──────────────────────────────────────────────────────────
+playwright>=1.44.0
+# After install, run: python -m playwright install chromium
+
+# ── Vision ────────────────────────────────────────────────────────────────────
+ultralytics>=8.2.0         # YOLOv8 (auto-downloads yolov8n.pt on first use)
+opencv-python>=4.10.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+# Tesseract binary: https://github.com/UB-Mannheim/tesseract/wiki (Windows)
