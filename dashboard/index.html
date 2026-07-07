@@ -2,1740 +2,1726 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charlie — Global Intel Command v2</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&display=swap');
-
-        :root {
-            --bg: #040810;
-            --surface: #070d14;
-            --panel: #0a1520;
-            --border: #0f2035;
-            --border2: #1a3050;
-            --text: #8ab4d4;
-            --text2: #c8dff0;
-            --muted: #2a4060;
-            --accent: #00d4ff;
-            --accent2: #007aa8;
-            --green: #00ff88;
-            --red: #ff3344;
-            --yellow: #ffd740;
-            --orange: #ff8c00;
-            --purple: #cc44ff;
-            --mono: 'Share Tech Mono', monospace;
-            --display: 'Orbitron', monospace;
-            --body: 'Space Grotesk', sans-serif;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            height: 100%;
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--mono);
-            overflow: hidden;
-            user-select: none;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px);
-            pointer-events: none;
-            z-index: 9999;
-        }
-
-        /* ── Header ── */
-        #header {
-            height: 36px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border2);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 0;
-            position: relative;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-
-        .h-logo {
-            font-family: var(--display);
-            font-size: 11px;
-            font-weight: 900;
-            color: var(--accent);
-            letter-spacing: 3px;
-            padding-right: 16px;
-            border-right: 1px solid var(--border2);
-            margin-right: 16px;
-            white-space: nowrap;
-        }
-
-        .h-logo span {
-            color: var(--muted);
-            font-weight: 400;
-        }
-
-        .h-meta {
-            display: flex;
-            gap: 20px;
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            flex: 1;
-        }
-
-        .h-meta-item {
-            display: flex;
-            gap: 6px;
-        }
-
-        .h-meta-item .label {
-            color: var(--muted);
-        }
-
-        .h-meta-item .val {
-            color: var(--text2);
-        }
-
-        .h-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-size: 10px;
-        }
-
-        .threat-level {
-            font-family: var(--display);
-            font-size: 10px;
-            letter-spacing: 2px;
-        }
-
-        .threat-elevated {
-            color: var(--yellow);
-        }
-
-        #clock {
-            font-family: var(--display);
-            font-size: 11px;
-            color: var(--accent);
-            letter-spacing: 2px;
-        }
-
-        /* ── Charlie status indicator ── */
-        .charlie-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 9px;
-            letter-spacing: 1px;
-            padding: 4px 10px;
-            border: 1px solid var(--border2);
-            border-radius: 2px;
-            cursor: pointer;
-        }
-
-        .charlie-status.online {
-            border-color: var(--green);
-            color: var(--green);
-        }
-
-        .charlie-status.offline {
-            border-color: var(--muted);
-            color: var(--muted);
-        }
-
-        .status-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-dot.pulse {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
-        }
-
-        /* ── Ticker ── */
-        #ticker-bar {
-            height: 26px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        #ticker-bar::before {
-            content: 'MKTS';
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--accent);
-            padding: 0 10px;
-            border-right: 1px solid var(--border2);
-            white-space: nowrap;
-            background: var(--surface);
-            height: 100%;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .ticker-scroll {
-            display: flex;
-            animation: scroll-left 60s linear infinite;
-            white-space: nowrap;
-        }
-
-        @keyframes scroll-left {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        .ticker-item {
-            padding: 0 20px;
-            font-size: 11px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-right: 1px solid var(--border);
-        }
-
-        .ticker-sym {
-            color: var(--text2);
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .ticker-price {
-            color: var(--text);
-        }
-
-        .ticker-up {
-            color: var(--green);
-        }
-
-        .ticker-down {
-            color: var(--red);
-        }
-
-        /* ── Main workspace ── */
-        #workspace {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 36px - 26px - 46px);
-            overflow: hidden;
-        }
-
-        #panels-row {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* ── Generic panel ── */
-        .panel {
-            display: flex;
-            flex-direction: column;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            overflow: hidden;
-            transition: flex 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s;
-            position: relative;
-            min-width: 0;
-        }
-
-        .panel:last-child {
-            border-right: none;
-        }
-
-        .panel.focused {
-            flex: 4 !important;
-        }
-
-        .panel.minimized {
-            flex: 0 0 40px !important;
-            opacity: 0.7;
-        }
-
-        .panel-hdr {
-            padding: 6px 10px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            cursor: pointer;
-            background: var(--panel);
-            user-select: none;
-        }
-
-        .panel-hdr:hover {
-            background: var(--border);
-        }
-
-        .panel-title {
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .panel-title::before {
-            content: '';
-            width: 2px;
-            height: 10px;
-            background: var(--accent);
-            border-radius: 1px;
-        }
-
-        .panel-actions {
-            display: flex;
-            gap: 4px;
-        }
-
-        .panel-btn {
-            background: none;
-            border: 1px solid var(--border2);
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 9px;
-            padding: 2px 6px;
-            cursor: pointer;
-            border-radius: 1px;
-            transition: all 0.15s;
-            white-space: nowrap;
-        }
-
-        .panel-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .panel-btn.active {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(0, 212, 255, 0.08);
-        }
-
-        .panel-body {
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .panel-scroll {
-            height: 100%;
-            overflow-y: auto;
-            padding: 6px;
-        }
-
-        .panel-scroll::-webkit-scrollbar {
-            width: 2px;
-        }
-
-        .panel-scroll::-webkit-scrollbar-thumb {
-            background: var(--border2);
-        }
-
-        /* Minimized label */
-        .minimized-label {
-            display: none;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--muted);
-            padding: 10px 0;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
-
-        .panel.minimized .minimized-label {
-            display: flex;
-        }
-
-        .panel.minimized .panel-body {
-            display: none;
-        }
-
-        .panel.minimized .panel-hdr {
-            border-bottom: none;
-        }
-
-        /* ── Resize handle ── */
-        .resize-handle {
-            width: 4px;
-            background: transparent;
-            cursor: col-resize;
-            position: relative;
-            z-index: 10;
-            flex-shrink: 0;
-            transition: background 0.2s;
-        }
-
-        .resize-handle:hover,
-        .resize-handle.dragging {
-            background: var(--accent2);
-        }
-
-        /* ── News panel ── */
-        .news-item {
-            padding: 8px 10px;
-            background: var(--panel);
-            border-left: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.15s;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 1px;
-        }
-
-        .news-item:hover {
-            background: var(--border);
-            border-left-color: var(--accent);
-        }
-
-        .news-cat {
-            font-size: 8px;
-            letter-spacing: 2px;
-            padding: 2px 6px;
-            border-radius: 1px;
-            display: inline-block;
-            margin-bottom: 4px;
-            font-weight: 700;
-        }
-
-        .cat-world {
-            background: rgba(0, 212, 255, 0.15);
-            color: var(--accent);
-        }
-
-        .cat-markets {
-            background: rgba(0, 255, 136, 0.12);
-            color: var(--green);
-        }
-
-        .cat-geo {
-            background: rgba(204, 68, 255, 0.12);
-            color: var(--purple);
-        }
-
-        .cat-energy {
-            background: rgba(255, 140, 0, 0.15);
-            color: var(--orange);
-        }
-
-        .cat-security {
-            background: rgba(255, 51, 68, 0.12);
-            color: var(--red);
-        }
-
-        .news-headline {
-            font-family: var(--body);
-            font-size: 11px;
-            color: var(--text2);
-            line-height: 1.4;
-            margin-bottom: 3px;
-        }
-
-        .news-meta {
-            font-size: 9px;
-            color: var(--muted);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* ── Content frame panel ── */
-        #content-frame-wrap {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background: var(--bg);
-        }
-
-        #content-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: var(--bg);
-        }
-
-        .content-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            color: var(--muted);
-        }
-
-        .content-placeholder .big-icon {
-            font-size: 48px;
-            opacity: 0.3;
-        }
-
-        .content-placeholder p {
-            font-size: 11px;
-            letter-spacing: 1px;
-            text-align: center;
-            line-height: 1.8;
-        }
-
-        .content-input-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 8px;
-            background: var(--panel);
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 6px;
-        }
-
-        .content-input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border2);
-            color: var(--text2);
-            font-family: var(--mono);
-            font-size: 11px;
-            padding: 6px 10px;
-            outline: none;
-            border-radius: 2px;
-        }
-
-        .content-input:focus {
-            border-color: var(--accent);
-        }
-
-        .content-go-btn {
-            background: var(--accent2);
-            border: none;
-            color: var(--text2);
-            font-family: var(--mono);
-            font-size: 10px;
-            padding: 6px 14px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            border-radius: 2px;
-            transition: background 0.15s;
-        }
-
-        .content-go-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .content-type-btns {
-            display: flex;
-            gap: 4px;
-            flex-shrink: 0;
-        }
-
-        /* ── Map panel ── */
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-
-        .leaflet-container {
-            background: #040810;
-        }
-
-        .leaflet-tile-pane {
-            filter: brightness(0.5) hue-rotate(180deg) invert(1) saturate(0.3) brightness(0.4) sepia(0.3);
-        }
-
-        .map-overlay {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            z-index: 500;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .map-stat {
-            background: rgba(4, 8, 16, 0.9);
-            border: 1px solid var(--border2);
-            padding: 4px 8px;
-            font-size: 9px;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .map-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-        }
-
-        .dot-flight {
-            background: var(--accent);
-        }
-
-        .dot-quake {
-            background: var(--red);
-        }
-
-        /* ── Seismic panel ── */
-        .seismic-item {
-            padding: 7px 8px;
-            background: var(--panel);
-            display: grid;
-            grid-template-columns: 44px 1fr auto;
-            align-items: center;
-            gap: 8px;
-            border-left: 2px solid transparent;
-            margin-bottom: 2px;
-        }
-
-        .seismic-item.s-high {
-            border-left-color: var(--red);
-        }
-
-        .seismic-item.s-mid {
-            border-left-color: var(--orange);
-        }
-
-        .seismic-item.s-low {
-            border-left-color: var(--yellow);
-        }
-
-        .seismic-item.s-minor {
-            border-left-color: var(--muted);
-        }
-
-        .s-mag {
-            font-family: var(--display);
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .s-high .s-mag {
-            color: var(--red);
-        }
-
-        .s-mid .s-mag {
-            color: var(--orange);
-        }
-
-        .s-low .s-mag {
-            color: var(--yellow);
-        }
-
-        .s-minor .s-mag {
-            color: var(--muted);
-        }
-
-        .s-place {
-            font-family: var(--body);
-            font-size: 10px;
-            color: var(--text2);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 2px;
-        }
-
-        .s-coords {
-            font-size: 8px;
-            color: var(--muted);
-        }
-
-        .s-time {
-            font-size: 8px;
-            color: var(--muted);
-            text-align: right;
-        }
-
-        /* ── Charlie panel ── */
-        #charlie-panel {
-            min-width: 260px;
-        }
-
-        .charlie-conv {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 8px;
-            height: calc(100% - 80px);
-            overflow-y: auto;
-        }
-
-        .charlie-conv::-webkit-scrollbar {
-            width: 2px;
-        }
-
-        .charlie-conv::-webkit-scrollbar-thumb {
-            background: var(--border2);
-        }
-
-        .msg {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .msg-role {
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: var(--muted);
-        }
-
-        .msg-bubble {
-            padding: 8px 10px;
-            border-radius: 2px;
-            font-family: var(--body);
-            font-size: 11px;
-            line-height: 1.4;
-        }
-
-        .msg.user .msg-role {
-            color: var(--accent);
-            text-align: right;
-        }
-
-        .msg.user .msg-bubble {
-            background: rgba(0, 212, 255, 0.08);
-            border: 1px solid var(--accent2);
-            color: var(--text2);
-            align-self: flex-end;
-            max-width: 90%;
-        }
-
-        .msg.charlie .msg-bubble {
-            background: var(--panel);
-            border: 1px solid var(--border2);
-            color: var(--text);
-            max-width: 95%;
-        }
-
-        /* ── Waveform ── */
-        #waveform-bar {
-            position: relative;
-            padding: 0 8px;
-            border-top: 1px solid var(--border);
-            height: 70px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--panel);
-            flex-shrink: 0;
-        }
-
-        .wf-label {
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        #waveform-canvas {
-            flex: 1;
-            height: 60px;
-        }
-
-        .wf-status {
-            font-size: 9px;
-            letter-spacing: 1px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        .wf-status.listening {
-            color: var(--green);
-            animation: pulse 1s infinite;
-        }
-
-        /* ── Voice input area ── */
-        .charlie-input-area {
-            padding: 8px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-
-        .charlie-input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border2);
-            color: var(--text2);
-            font-family: var(--mono);
-            font-size: 11px;
-            padding: 6px 10px;
-            outline: none;
-            border-radius: 2px;
-        }
-
-        .charlie-input:focus {
-            border-color: var(--accent);
-        }
-
-        .charlie-send-btn {
-            background: var(--accent2);
-            border: none;
-            color: var(--text2);
-            font-family: var(--mono);
-            font-size: 10px;
-            padding: 6px 12px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            border-radius: 2px;
-            transition: background 0.15s;
-        }
-
-        .charlie-send-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        /* ── Memory section ── */
-        .memory-section {
-            padding: 8px;
-            border-top: 1px solid var(--border);
-        }
-
-        .memory-title {
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .memory-facts {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .memory-fact {
-            font-size: 9px;
-            color: var(--text);
-            padding: 3px 6px;
-            background: var(--panel);
-            border-left: 2px solid var(--accent2);
-        }
-
-        /* ── Weather bar ── */
-        #weather-bar {
-            height: 46px;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 0;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-
-        .wx-label {
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: var(--accent);
-            padding-right: 12px;
-            border-right: 1px solid var(--border2);
-            margin-right: 12px;
-            white-space: nowrap;
-        }
-
-        .wx-city {
-            display: flex;
-            flex-direction: column;
-            padding: 0 14px;
-            border-right: 1px solid var(--border);
-            min-width: 72px;
-        }
-
-        .wx-city-name {
-            font-size: 8px;
-            letter-spacing: 1px;
-            color: var(--muted);
-            margin-bottom: 2px;
-        }
-
-        .wx-city-temp {
-            font-family: var(--display);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text2);
-        }
-
-        .wx-city-wind {
-            font-size: 8px;
-            color: var(--accent2);
-        }
-
-        /* ── Focus mode overlay hint ── */
-        .focus-hint {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            font-size: 8px;
-            letter-spacing: 1px;
-            color: var(--muted);
-            z-index: 5;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .panel-hdr:hover .focus-hint {
-            opacity: 1;
-        }
-
-        /* ── Loading / Error ── */
-        .ld {
-            font-size: 10px;
-            color: var(--muted);
-            padding: 20px;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-
-        .er {
-            font-size: 10px;
-            color: var(--red);
-            padding: 10px;
-            text-align: center;
-        }
-
-        @keyframes pulse-map {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.6;
-                transform: scale(1.4);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charlie — Intel Command</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #040810;
+      --surface: #070d14;
+      --panel: #0a1520;
+      --border: #0f2035;
+      --border2: #1a3050;
+      --text: #8ab4d4;
+      --text2: #c8dff0;
+      --muted: #2a4060;
+      --accent: #00d4ff;
+      --accent2: #007aa8;
+      --green: #00ff88;
+      --red: #ff3344;
+      --yellow: #ffd740;
+      --orange: #ff8c00;
+      --purple: #cc44ff;
+      --saffron: #ff9933;
+      --mono: 'Share Tech Mono', monospace;
+      --display: 'Orbitron', monospace;
+      --body: 'Space Grotesk', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.05) 2px, rgba(0, 0, 0, 0.05) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Header */
+    #header {
+      height: 36px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .h-logo {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 3px;
+      padding-right: 16px;
+      border-right: 1px solid var(--border2);
+      margin-right: 16px;
+      white-space: nowrap;
+    }
+
+    .h-logo span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .h-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      flex: 1;
+    }
+
+    .h-meta-item {
+      display: flex;
+      gap: 6px;
+    }
+
+    .h-meta-item .val {
+      color: var(--text2);
+    }
+
+    .h-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 10px;
+    }
+
+    #clock {
+      font-family: var(--display);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    /* Charlie status */
+    .charlie-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .charlie-status.online {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .charlie-status.offline {
+      border-color: var(--muted);
+      color: var(--muted);
+    }
+
+    .charlie-status.listening {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-dot.pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    /* Ticker */
+    #ticker-bar {
+      height: 26px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    #ticker-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      padding: 0 10px;
+      border-right: 1px solid var(--border2);
+      white-space: nowrap;
+      background: var(--surface);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .ticker-scroll {
+      display: flex;
+      animation: scroll-left 90s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes scroll-left {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .ticker-item {
+      padding: 0 16px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .ticker-item:hover {
+      background: rgba(0, 212, 255, 0.05);
+    }
+
+    .ticker-sym {
+      color: var(--text2);
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .ticker-up {
+      color: var(--green);
+    }
+
+    .ticker-down {
+      color: var(--red);
+    }
+
+    .ticker-chart-btn {
+      color: var(--muted);
+      font-size: 9px;
+      transition: color 0.15s;
+    }
+
+    .ticker-item:hover .ticker-chart-btn {
+      color: var(--accent);
+    }
+
+    /* Workspace */
+    #workspace {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 36px - 26px - 46px);
+      overflow: hidden;
+    }
+
+    #panels-row {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Panel */
+    .panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+      transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+      position: relative;
+      min-width: 0;
+    }
+
+    .panel:last-child {
+      border-right: none;
+    }
+
+    .panel.focused {
+      flex: 4 !important;
+    }
+
+    .panel.minimized {
+      flex: 0 0 38px !important;
+      opacity: 0.6;
+    }
+
+    .panel-hdr {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      cursor: pointer;
+      background: var(--panel);
+      user-select: none;
+    }
+
+    .panel-hdr:hover {
+      background: var(--border);
+    }
+
+    .panel-title {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 2px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .panel-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .panel-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .panel-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.08);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel-scroll {
+      height: 100%;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .panel-scroll::-webkit-scrollbar {
+      width: 2px;
+    }
+
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: var(--border2);
+    }
+
+    .minimized-label {
+      display: none;
+      writing-mode: vertical-rl;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 8px 0;
+    }
+
+    .panel.minimized .minimized-label {
+      display: flex;
+    }
+
+    .panel.minimized .panel-body,
+    .panel.minimized .news-tabs {
+      display: none;
+    }
+
+    .panel.minimized .panel-hdr {
+      border-bottom: none;
+    }
+
+    /* Resize handle */
+    .resize-handle {
+      width: 4px;
+      background: transparent;
+      cursor: col-resize;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: var(--accent2);
+    }
+
+    /* News tabs */
+    .news-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .news-tab {
+      flex: 1;
+      padding: 5px 6px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    .news-tab:last-child {
+      border-right: none;
+    }
+
+    .news-tab.active {
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.06);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .news-tab:hover {
+      color: var(--text2);
+    }
+
+    /* News items */
+    .news-item {
+      padding: 8px 10px;
+      background: var(--panel);
+      border-left: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .news-item:hover {
+      background: var(--border);
+      border-left-color: var(--accent);
+    }
+
+    .news-cat {
+      font-size: 8px;
+      letter-spacing: 2px;
+      padding: 2px 6px;
+      border-radius: 1px;
+      display: inline-block;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .cat-india {
+      background: rgba(255, 153, 51, 0.15);
+      color: var(--saffron);
+    }
+
+    .cat-world {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .cat-markets {
+      background: rgba(0, 255, 136, 0.12);
+      color: var(--green);
+    }
+
+    .cat-sports {
+      background: rgba(204, 68, 255, 0.12);
+      color: var(--purple);
+    }
+
+    .cat-tech {
+      background: rgba(255, 215, 64, 0.12);
+      color: var(--yellow);
+    }
+
+    .cat-security {
+      background: rgba(255, 51, 68, 0.12);
+      color: var(--red);
+    }
+
+    .news-headline {
+      font-family: var(--body);
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.4;
+      margin-bottom: 3px;
+    }
+
+    .news-meta {
+      font-size: 9px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Map */
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .leaflet-container {
+      background: #040810;
+    }
+
+    .leaflet-tile-pane {
+      filter: brightness(0.5) hue-rotate(180deg) invert(1) saturate(0.3) brightness(0.4) sepia(0.3);
+    }
+
+    .map-overlay {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .map-stat {
+      background: rgba(4, 8, 16, 0.9);
+      border: 1px solid var(--border2);
+      padding: 4px 8px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .map-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .dot-flight {
+      background: var(--accent);
+    }
+
+    .dot-weather {
+      background: var(--yellow);
+    }
+
+    /* Content frame */
+    .content-input-bar {
+      height: 34px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    .content-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      outline: none;
+      border-radius: 2px;
+      height: 24px;
+    }
+
+    .content-input:focus {
+      border-color: var(--accent);
+    }
+
+    .content-go-btn {
+      background: var(--accent2);
+      border: none;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      cursor: pointer;
+      border-radius: 2px;
+      height: 24px;
+    }
+
+    .content-go-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .content-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .content-placeholder .big-icon {
+      font-size: 40px;
+      opacity: 0.25;
+    }
+
+    /* Charlie panel */
+    .charlie-conv {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .charlie-conv::-webkit-scrollbar {
+      width: 2px;
+    }
+
+    .charlie-conv::-webkit-scrollbar-thumb {
+      background: var(--border2);
+    }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .msg-role {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .msg-bubble {
+      padding: 7px 10px;
+      border-radius: 2px;
+      font-family: var(--body);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .msg.user .msg-role {
+      color: var(--accent);
+      text-align: right;
+    }
+
+    .msg.user .msg-bubble {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid var(--accent2);
+      color: var(--text2);
+      align-self: flex-end;
+      max-width: 92%;
+    }
+
+    .msg.charlie .msg-bubble {
+      background: var(--panel);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      max-width: 96%;
+    }
+
+    .memory-section {
+      padding: 6px 8px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .memory-title {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .memory-facts {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-height: 50px;
+      overflow-y: auto;
+    }
+
+    .memory-fact {
+      font-size: 9px;
+      color: var(--text);
+      padding: 2px 6px;
+      background: var(--panel);
+      border-left: 2px solid var(--accent2);
+    }
+
+    .charlie-input-area {
+      padding: 7px 8px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .charlie-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 5px 10px;
+      outline: none;
+      border-radius: 2px;
+    }
+
+    .charlie-input:focus {
+      border-color: var(--accent);
+    }
+
+    .charlie-send-btn {
+      background: var(--accent2);
+      border: none;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 12px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+
+    .charlie-send-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Waveform */
+    #waveform-bar {
+      height: 56px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      flex-shrink: 0;
+    }
+
+    .wf-label {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    #waveform-canvas {
+      flex: 1;
+      height: 44px;
+    }
+
+    .wf-status {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .wf-status.listening {
+      color: var(--accent);
+    }
+
+    .wf-status.speaking {
+      color: var(--yellow);
+    }
+
+    /* Weather bar */
+    #weather-bar {
+      height: 46px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .wx-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--saffron);
+      padding-right: 12px;
+      border-right: 1px solid var(--border2);
+      margin-right: 12px;
+      white-space: nowrap;
+    }
+
+    .wx-city {
+      display: flex;
+      flex-direction: column;
+      padding: 0 12px;
+      border-right: 1px solid var(--border);
+      min-width: 65px;
+    }
+
+    .wx-city-name {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .wx-city-temp {
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+    }
+
+    .wx-city-wind {
+      font-size: 8px;
+      color: var(--accent2);
+    }
+
+    /* Graph modal */
+    #graph-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 16, 0.97);
+      z-index: 10000;
+      flex-direction: column;
+    }
+
+    #graph-modal.open {
+      display: flex;
+    }
+
+    .modal-hdr {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-family: var(--display);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    .modal-close {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    #graph-frame {
+      flex: 1;
+      border: none;
+    }
+
+    .ld {
+      font-size: 10px;
+      color: var(--muted);
+      padding: 20px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .er {
+      font-size: 10px;
+      color: var(--red);
+      padding: 10px;
+      text-align: center;
+    }
+
+    @keyframes pulse-map {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(1.4);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-    <!-- Header -->
-    <div id="header">
-        <div class="h-logo">CHARLIE <span>//</span> GLOBAL INTEL COMMAND</div>
-        <div class="h-meta">
-            <div class="h-meta-item"><span class="label">ENC:</span><span class="val">AES-256-GCM</span></div>
-            <div class="h-meta-item"><span class="label">TLS:</span><span class="val">1.3</span></div>
-            <div class="h-meta-item"><span class="label">UPLINK:</span><span class="val"
-                    style="color:var(--green)">NOMINAL</span></div>
-            <div class="h-meta-item"><span class="label">ASSETS:</span><span class="val" id="asset-count">—
-                    ACTIVE</span></div>
+  <div id="header">
+    <div class="h-logo">CHARLIE <span>//</span> INTEL COMMAND</div>
+    <div class="h-meta">
+      <div class="h-meta-item"><span class="label">ENC:</span><span class="val">AES-256-GCM</span></div>
+      <div class="h-meta-item"><span class="label">UPLINK:</span><span class="val"
+          style="color:var(--green)">NOMINAL</span></div>
+      <div class="h-meta-item"><span class="label">ASSETS:</span><span class="val" id="asset-count">—</span></div>
+    </div>
+    <div class="h-right">
+      <div id="charlie-status-chip" class="charlie-status offline">
+        <div class="status-dot" id="charlie-dot"></div>
+        <span id="charlie-status-text">CHARLIE OFFLINE</span>
+      </div>
+      <div id="clock">--:--:-- IST</div>
+    </div>
+  </div>
+
+  <div id="ticker-bar">
+    <div id="ticker-label">MKTS</div>
+    <div class="ticker-scroll" id="ticker-scroll">
+      <div class="ld">Loading...</div>
+    </div>
+  </div>
+
+  <div id="workspace">
+    <div id="panels-row">
+
+      <!-- NEWS -->
+      <div class="panel" id="panel-news" style="flex:1.2;">
+        <div class="panel-hdr" onclick="handlePanelClick('news')">
+          <div class="panel-title">INTEL FEED</div>
+          <div class="panel-actions">
+            <button class="panel-btn" onclick="focusPanel('news',event)">⤢ FOCUS</button>
+            <button class="panel-btn" onclick="minimizePanel('news',event)">▂</button>
+          </div>
         </div>
-        <div class="h-right">
-            <div id="charlie-status-chip" class="charlie-status offline" onclick="toggleCharliePanel()">
-                <div class="status-dot" id="charlie-dot"></div>
-                <span id="charlie-status-text">CHARLIE OFFLINE</span>
+        <div class="news-tabs">
+          <div class="news-tab active" id="tab-india" onclick="switchNewsTab('india')">INDIA</div>
+          <div class="news-tab" id="tab-global" onclick="switchNewsTab('global')">GLOBAL</div>
+          <div class="news-tab" id="tab-sports" onclick="switchNewsTab('sports')">SPORTS</div>
+        </div>
+        <div class="panel-body">
+          <div class="panel-scroll" id="news-feed">
+            <div class="ld">Fetching feeds...</div>
+          </div>
+        </div>
+        <div class="minimized-label">NEWS</div>
+      </div>
+
+      <div class="resize-handle" data-panels="news,map"></div>
+
+      <!-- MAP / CONTENT -->
+      <div class="panel" id="panel-map" style="flex:2;">
+        <div class="panel-hdr" onclick="handlePanelClick('map')">
+          <div class="panel-title" id="map-panel-title">INDIA MAP</div>
+          <div class="panel-actions">
+            <button class="panel-btn active" id="btn-map-view" onclick="showMapView(event)">MAP</button>
+            <button class="panel-btn" id="btn-content-view" onclick="showContentView(event)">WEB/YT</button>
+            <button class="panel-btn" id="btn-india-zoom" onclick="setMapRegion('india',event)">IND</button>
+            <button class="panel-btn" id="btn-global-zoom" onclick="setMapRegion('global',event)">GLB</button>
+            <button class="panel-btn" onclick="focusPanel('map',event)">⤢</button>
+            <button class="panel-btn" onclick="minimizePanel('map',event)">▂</button>
+          </div>
+        </div>
+        <div class="panel-body" id="map-panel-body">
+          <!-- Map -->
+          <div id="map-view" style="width:100%;height:100%;position:relative;">
+            <div id="map"></div>
+            <div class="map-overlay">
+              <div class="map-stat">
+                <div class="map-dot dot-flight"></div><span id="flight-count">— FLIGHTS</span>
+              </div>
+              <div class="map-stat">
+                <div class="map-dot dot-weather"></div><span id="city-count">— CITIES</span>
+              </div>
             </div>
-            <div class="threat-level">THREAT: <span class="threat-elevated">ELEVATED</span></div>
-            <div id="clock">--:--:-- UTC</div>
+          </div>
+          <!-- Content -->
+          <div id="content-view" style="width:100%;height:100%;display:none;flex-direction:column;">
+            <div class="content-input-bar">
+              <button class="panel-btn active" id="mode-url-btn" onclick="setContentMode('url')">URL</button>
+              <button class="panel-btn" id="mode-yt-btn" onclick="setContentMode('yt')">YT</button>
+              <input class="content-input" id="content-url-input" placeholder="Enter URL or YouTube search..."
+                onkeydown="if(event.key==='Enter')loadContent()" />
+              <button class="content-go-btn" onclick="loadContent()">LOAD →</button>
+            </div>
+            <div style="position:relative;flex:1;overflow:hidden;">
+              <div class="content-placeholder" id="content-ph">
+                <div class="big-icon">◈</div>
+                <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;">CONTENT FRAME
+                  READY<br><span style="color:var(--muted);font-size:9px;">Enter a URL or YouTube search above</span>
+                </p>
+              </div>
+              <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;" allowfullscreen
+                allow="autoplay"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
+            </div>
+          </div>
         </div>
+        <div class="minimized-label">MAP</div>
+      </div>
+
+      <div class="resize-handle" data-panels="map,charlie"></div>
+
+      <!-- CHARLIE -->
+      <div class="panel" id="panel-charlie" style="flex:1;min-width:250px;">
+        <div class="panel-hdr" onclick="handlePanelClick('charlie')">
+          <div class="panel-title">CHARLIE</div>
+          <div class="panel-actions">
+            <button class="panel-btn" onclick="focusPanel('charlie',event)">⤢</button>
+            <button class="panel-btn" onclick="minimizePanel('charlie',event)">▂</button>
+          </div>
+        </div>
+        <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
+          <div
+            style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:9px;display:flex;gap:12px;flex-shrink:0;">
+            <span>STT:<span id="stt-status" style="color:var(--muted);margin-left:4px;">—</span></span>
+            <span>LLM:<span id="llm-status" style="color:var(--muted);margin-left:4px;">—</span></span>
+            <span>MEM:<span id="mem-status" style="color:var(--muted);margin-left:4px;">—</span></span>
+          </div>
+          <div class="charlie-conv" id="charlie-conv">
+            <div class="ld">Waiting for Charlie...</div>
+          </div>
+          <div class="memory-section">
+            <div class="memory-title">MEMORY</div>
+            <div class="memory-facts" id="memory-facts">
+              <div class="memory-fact">No facts yet</div>
+            </div>
+          </div>
+          <div class="charlie-input-area">
+            <input class="charlie-input" id="charlie-input" placeholder="Type or speak..."
+              onkeydown="handleInputKey(event)" />
+            <button class="charlie-send-btn" id="send-btn" onclick="sendTextMessage()">SEND</button>
+          </div>
+        </div>
+        <div class="minimized-label">CHARLIE</div>
+      </div>
+
     </div>
 
-    <!-- Ticker -->
-    <div id="ticker-bar">
-        <div class="ticker-scroll" id="ticker-scroll">
-            <div class="ld">Loading markets...</div>
-        </div>
+    <div id="waveform-bar">
+      <div class="wf-label">VOICE</div>
+      <canvas id="waveform-canvas"></canvas>
+      <div class="wf-status" id="wf-status">STANDBY</div>
     </div>
+  </div>
 
-    <!-- Workspace -->
-    <div id="workspace">
-        <div id="panels-row">
+  <div id="weather-bar">
+    <div class="wx-label">🇮🇳 INDIA</div>
+    <div id="weather-cities" style="display:flex;flex:1;overflow:hidden;"></div>
+  </div>
 
-            <!-- NEWS PANEL -->
-            <div class="panel" id="panel-news" style="flex: 1.2;">
-                <div class="panel-hdr" onclick="handlePanelClick('news')">
-                    <div class="panel-title">INTEL FEED</div>
-                    <div class="panel-actions">
-                        <button class="panel-btn" onclick="focusPanel('news', event)">⤢ FOCUS</button>
-                        <button class="panel-btn" onclick="minimizePanel('news', event)">▂ MIN</button>
-                    </div>
-                    <div class="focus-hint">CLICK TO FOCUS</div>
-                </div>
-                <div class="panel-body">
-                    <div class="panel-scroll" id="news-feed">
-                        <div class="ld">Fetching feeds...</div>
-                    </div>
-                </div>
-                <div class="minimized-label">INTEL FEED</div>
-            </div>
-
-            <div class="resize-handle" data-panels="news,content"></div>
-
-            <!-- CONTENT FRAME PANEL -->
-            <div class="panel" id="panel-content" style="flex: 2;">
-                <div class="panel-hdr" onclick="handlePanelClick('content')">
-                    <div class="panel-title" id="content-title">CONTENT FRAME</div>
-                    <div class="panel-actions">
-                        <button class="panel-btn" id="btn-yt" onclick="setContentMode('youtube', event)">YT</button>
-                        <button class="panel-btn" id="btn-web" onclick="setContentMode('web', event)">WEB</button>
-                        <button class="panel-btn" id="btn-map" onclick="setContentMode('map', event)"
-                            class="active">MAP</button>
-                        <button class="panel-btn" onclick="focusPanel('content', event)">⤢ FOCUS</button>
-                        <button class="panel-btn" onclick="minimizePanel('content', event)">▂ MIN</button>
-                    </div>
-                </div>
-                <div class="panel-body" id="content-body">
-                    <!-- Map view (default) -->
-                    <div id="map-view" style="width:100%;height:100%;position:relative;">
-                        <div id="map"></div>
-                        <div class="map-overlay">
-                            <div class="map-stat">
-                                <div class="map-dot dot-flight"></div><span id="flight-count">— FLIGHT CORRIDORS</span>
-                            </div>
-                            <div class="map-stat">
-                                <div class="map-dot dot-quake"></div><span id="quake-count">— SEISMIC EVENTS</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Content frame view (hidden by default) -->
-                    <div id="content-view" style="width:100%;height:100%;display:none;flex-direction:column;">
-                        <div id="content-frame-wrap" style="flex:1;position:relative;">
-                            <div class="content-placeholder" id="content-placeholder">
-                                <div class="big-icon">◈</div>
-                                <p>CONTENT FRAME READY<br><span style="color:var(--muted);font-size:9px;">Enter a URL,
-                                        YouTube link, or ask Charlie</span></p>
-                            </div>
-                            <iframe id="content-frame" style="display:none;" allowfullscreen
-                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-                        </div>
-                        <div class="content-input-bar">
-                            <div class="content-type-btns">
-                                <button class="panel-btn active" id="mode-url" onclick="setUrlMode('url')">URL</button>
-                                <button class="panel-btn" id="mode-yt" onclick="setUrlMode('youtube')">YT
-                                    SEARCH</button>
-                            </div>
-                            <input class="content-input" id="content-url-input" placeholder="Enter URL or search..."
-                                onkeydown="if(event.key==='Enter')loadContent()" />
-                            <button class="content-go-btn" onclick="loadContent()">LOAD →</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="resize-handle" data-panels="content,seismic"></div>
-
-            <!-- SEISMIC PANEL -->
-            <div class="panel" id="panel-seismic" style="flex: 0.8;">
-                <div class="panel-hdr" onclick="handlePanelClick('seismic')">
-                    <div class="panel-title">SEISMIC MONITOR</div>
-                    <div class="panel-actions">
-                        <button class="panel-btn" onclick="focusPanel('seismic', event)">⤢ FOCUS</button>
-                        <button class="panel-btn" onclick="minimizePanel('seismic', event)">▂ MIN</button>
-                    </div>
-                </div>
-                <div class="panel-body">
-                    <div class="panel-scroll" id="seismic-list">
-                        <div class="ld">Fetching USGS...</div>
-                    </div>
-                </div>
-                <div class="minimized-label">SEISMIC</div>
-            </div>
-
-            <div class="resize-handle" data-panels="seismic,charlie"></div>
-
-            <!-- CHARLIE PANEL -->
-            <div class="panel" id="panel-charlie" style="flex: 1; min-width: 260px;">
-                <div class="panel-hdr" onclick="handlePanelClick('charlie')">
-                    <div class="panel-title">CHARLIE</div>
-                    <div class="panel-actions">
-                        <button class="panel-btn" onclick="focusPanel('charlie', event)">⤢ FOCUS</button>
-                        <button class="panel-btn" onclick="minimizePanel('charlie', event)">▂ MIN</button>
-                    </div>
-                </div>
-                <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
-                    <!-- System status -->
-                    <div
-                        style="padding:6px 8px;border-bottom:1px solid var(--border);font-size:9px;display:flex;gap:12px;">
-                        <span>STT: <span id="stt-status" style="color:var(--muted)">—</span></span>
-                        <span>LLM: <span id="llm-status" style="color:var(--muted)">—</span></span>
-                        <span>MEM: <span id="mem-status" style="color:var(--muted)">—</span></span>
-                    </div>
-                    <!-- Conversation -->
-                    <div class="charlie-conv" id="charlie-conv">
-                        <div class="ld">Waiting for Charlie...</div>
-                    </div>
-                    <!-- Memory facts -->
-                    <div class="memory-section">
-                        <div class="memory-title">MEMORY FACTS</div>
-                        <div class="memory-facts" id="memory-facts">
-                            <div class="memory-fact">No facts stored yet</div>
-                        </div>
-                    </div>
-                    <!-- Text input -->
-                    <div class="charlie-input-area">
-                        <input class="charlie-input" id="charlie-input" placeholder="Type or speak..."
-                            onkeydown="if(event.key==='Enter')sendTextMessage()" />
-                        <button class="charlie-send-btn" onclick="sendTextMessage()">SEND</button>
-                    </div>
-                </div>
-                <div class="minimized-label">CHARLIE</div>
-            </div>
-
-        </div>
-
-        <!-- Waveform bar -->
-        <div id="waveform-bar">
-            <div class="wf-label">VOICE</div>
-            <canvas id="waveform-canvas"></canvas>
-            <div class="wf-status" id="wf-status">STANDBY</div>
-        </div>
+  <div id="graph-modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-title">CHART</div>
+      <button class="modal-close" onclick="closeGraph()">✕ CLOSE</button>
     </div>
+    <iframe id="graph-frame" src=""></iframe>
+  </div>
 
-    <!-- Weather bar -->
-    <div id="weather-bar">
-        <div class="wx-label">METAR</div>
-        <div id="weather-cities">
-            <div class="ld">Loading...</div>
-        </div>
-    </div>
+  <script>
+    // ── IST Clock ─────────────────────────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      // IST = UTC + 5:30
+      const ist = new Date(now.getTime() + (5 * 60 + 30) * 60 * 1000);
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('clock').textContent =
+        `${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}:${pad(ist.getUTCSeconds())} IST`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    <script>
-        // ── Clock ─────────────────────────────────────────────────────────────────────
-        function updateClock() {
-            const now = new Date();
-            const pad = n => String(n).padStart(2, '0');
-            document.getElementById('clock').textContent =
-                `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} UTC`;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+    // ── Panel Management ──────────────────────────────────────────────────────────
+    const panelState = { news: 'normal', map: 'normal', charlie: 'normal' };
+    const panelFlex = { news: 1.2, map: 2, charlie: 1 };
 
-        // ── Panel state ───────────────────────────────────────────────────────────────
-        const panelState = { news: 'normal', content: 'normal', seismic: 'normal', charlie: 'normal' };
-        const panelFlexDefault = { news: 1.2, content: 2, seismic: 0.8, charlie: 1 };
+    function getPanel(id) { return document.getElementById(`panel-${id}`); }
 
-        function getPanel(id) { return document.getElementById(`panel-${id}`); }
+    function focusPanel(id, e) {
+      if (e) e.stopPropagation();
+      const wasFocused = panelState[id] === 'focused';
+      // Reset all
+      Object.keys(panelState).forEach(k => {
+        panelState[k] = 'normal';
+        const p = getPanel(k);
+        p.classList.remove('focused', 'minimized');
+        p.style.flex = panelFlex[k];
+      });
+      if (!wasFocused) {
+        panelState[id] = 'focused';
+        getPanel(id).classList.add('focused');
+        Object.keys(panelState).filter(k => k !== id).forEach(k => {
+          panelState[k] = 'minimized';
+          getPanel(k).classList.add('minimized');
+          getPanel(k).style.flex = '0 0 38px';
+        });
+      }
+      if (id === 'map' || !wasFocused) setTimeout(() => map && map.invalidateSize(), 420);
+    }
 
-        function focusPanel(id, e) {
-            if (e) e.stopPropagation();
-            const wasFocused = panelState[id] === 'focused';
-            Object.keys(panelState).forEach(k => {
-                panelState[k] = 'normal';
-                const p = getPanel(k);
-                p.classList.remove('focused', 'minimized');
-                p.style.flex = panelFlexDefault[k];
-            });
-            if (!wasFocused) {
-                panelState[id] = 'focused';
-                getPanel(id).classList.add('focused');
-                Object.keys(panelState).filter(k => k !== id).forEach(k => {
-                    panelState[k] = 'minimized';
-                    getPanel(k).classList.add('minimized');
-                    getPanel(k).style.flex = '0 0 40px';
-                });
-            }
-            if (id === 'content') setTimeout(() => map && map.invalidateSize(), 400);
-        }
+    function minimizePanel(id, e) {
+      if (e) e.stopPropagation();
+      const p = getPanel(id);
+      if (panelState[id] === 'minimized') {
+        panelState[id] = 'normal'; p.classList.remove('minimized'); p.style.flex = panelFlex[id];
+      } else {
+        panelState[id] = 'minimized'; p.classList.add('minimized'); p.style.flex = '0 0 38px';
+      }
+    }
 
-        function minimizePanel(id, e) {
-            if (e) e.stopPropagation();
-            const p = getPanel(id);
-            if (panelState[id] === 'minimized') {
-                panelState[id] = 'normal';
-                p.classList.remove('minimized');
-                p.style.flex = panelFlexDefault[id];
-            } else {
-                panelState[id] = 'minimized';
-                p.classList.add('minimized');
-                p.style.flex = '0 0 40px';
-            }
-        }
+    function handlePanelClick(id) { if (panelState[id] === 'minimized') minimizePanel(id); }
 
-        function handlePanelClick(id) {
-            if (panelState[id] === 'minimized') {
-                minimizePanel(id);
-            }
-        }
+    function resetPanels() {
+      Object.keys(panelState).forEach(k => {
+        panelState[k] = 'normal';
+        getPanel(k).classList.remove('focused', 'minimized');
+        getPanel(k).style.flex = panelFlex[k];
+      });
+      setTimeout(() => map && map.invalidateSize(), 420);
+    }
 
-        // Voice command panel control
-        function handleVoiceCommand(text) {
-            const t = text.toLowerCase();
-            if (t.includes('focus on news') || t.includes('focus news')) focusPanel('news');
-            else if (t.includes('focus on map') || t.includes('focus map')) focusPanel('content');
-            else if (t.includes('focus on seismic') || t.includes('focus earthquake')) focusPanel('seismic');
-            else if (t.includes('focus on charlie') || t.includes('focus charlie')) focusPanel('charlie');
-            else if (t.includes('minimize news')) minimizePanel('news');
-            else if (t.includes('minimize map')) minimizePanel('content');
-            else if (t.includes('minimize seismic')) minimizePanel('seismic');
-            else if (t.includes('reset panels') || t.includes('normal view')) resetPanels();
-            else if (t.includes('open youtube') || t.includes('show youtube')) { setContentMode('youtube'); }
-            else if (t.includes('open ') && t.includes('.com')) loadUrlFromVoice(text);
-        }
+    // ── Voice command routing ─────────────────────────────────────────────────────
+    function handleVoiceCommand(text) {
+      const t = text.toLowerCase();
+      // Panel focus commands
+      if (/focus.*(news|intel|feed)/.test(t)) { focusPanel('news'); return; }
+      if (/focus.*(map|screen|world)/.test(t)) { focusPanel('map'); return; }
+      if (/focus.*charlie/.test(t)) { focusPanel('charlie'); return; }
+      if (/reset|normal view|show all/.test(t)) { resetPanels(); return; }
+      // Content commands
+      if (/open.*youtube|show.*youtube|play.*youtube/.test(t)) { showContentView(); setContentMode('yt'); return; }
+      if (/show.*news|focus.*news/.test(t)) { focusPanel('news'); switchNewsTab('india'); return; }
+      if (/open.*map|show.*map/.test(t)) { focusPanel('map'); showMapView(); return; }
+      // URL from Charlie response
+      const urlMatch = text.match(/https?:\/\/[^\s]+/);
+      if (urlMatch) { loadUrl(urlMatch[0], 'url'); showContentView(); }
+    }
 
-        function resetPanels() {
-            Object.keys(panelState).forEach(k => {
-                panelState[k] = 'normal';
-                const p = getPanel(k);
-                p.classList.remove('focused', 'minimized');
-                p.style.flex = panelFlexDefault[k];
-            });
-            setTimeout(() => map && map.invalidateSize(), 400);
-        }
+    // ── Resize handles ────────────────────────────────────────────────────────────
+    document.querySelectorAll('.resize-handle').forEach(handle => {
+      let dragging = false, startX = 0, lPanel, rPanel, startL, startR;
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault(); dragging = true; startX = e.clientX;
+        handle.classList.add('dragging');
+        const [lId, rId] = handle.dataset.panels.split(',');
+        lPanel = getPanel(lId); rPanel = getPanel(rId);
+        startL = parseFloat(lPanel.style.flex) || panelFlex[lId];
+        startR = parseFloat(rPanel.style.flex) || panelFlex[rId];
+      });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const dx = e.clientX - startX, tw = lPanel.parentElement.offsetWidth;
+        const delta = (dx / tw) * (startL + startR);
+        lPanel.style.flex = Math.max(0.15, startL + delta);
+        rPanel.style.flex = Math.max(0.15, startR - delta);
+        map && map.invalidateSize();
+      });
+      document.addEventListener('mouseup', () => { dragging = false; handle.classList.remove('dragging'); });
+    });
 
-        // ── Resize handles ────────────────────────────────────────────────────────────
-        document.querySelectorAll('.resize-handle').forEach(handle => {
-            let dragging = false, startX = 0;
-            let leftPanel, rightPanel, startLeftFlex, startRightFlex;
+    // ── Map ───────────────────────────────────────────────────────────────────────
+    const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-            handle.addEventListener('mousedown', e => {
-                e.preventDefault();
-                dragging = true;
-                startX = e.clientX;
-                handle.classList.add('dragging');
-                const [leftId, rightId] = handle.dataset.panels.split(',');
-                leftPanel = getPanel(leftId);
-                rightPanel = getPanel(rightId);
-                startLeftFlex = parseFloat(leftPanel.style.flex) || panelFlexDefault[leftId];
-                startRightFlex = parseFloat(rightPanel.style.flex) || panelFlexDefault[rightId];
-            });
+    function setMapRegion(region, e) {
+      if (e) e.stopPropagation();
+      if (region === 'india') {
+        map.setView([20.5937, 78.9629], 5);
+        document.getElementById('btn-india-zoom').classList.add('active');
+        document.getElementById('btn-global-zoom').classList.remove('active');
+        document.getElementById('map-panel-title').textContent = 'INDIA MAP';
+      } else {
+        map.setView([20, 10], 2);
+        document.getElementById('btn-india-zoom').classList.remove('active');
+        document.getElementById('btn-global-zoom').classList.add('active');
+        document.getElementById('map-panel-title').textContent = 'WORLD MAP';
+      }
+    }
 
-            document.addEventListener('mousemove', e => {
-                if (!dragging) return;
-                const dx = e.clientX - startX;
-                const totalW = leftPanel.parentElement.offsetWidth;
-                const flexDelta = (dx / totalW) * (startLeftFlex + startRightFlex);
-                const newLeft = Math.max(0.1, startLeftFlex + flexDelta);
-                const newRight = Math.max(0.1, startRightFlex - flexDelta);
-                leftPanel.style.flex = newLeft;
-                rightPanel.style.flex = newRight;
-                if (leftPanel.id === 'panel-content' || rightPanel.id === 'panel-content') {
-                    map && map.invalidateSize();
-                }
-            });
+    // ── Map/Content switcher ──────────────────────────────────────────────────────
+    function showMapView(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('map-view').style.display = 'block';
+      document.getElementById('content-view').style.display = 'none';
+      document.getElementById('btn-map-view').classList.add('active');
+      document.getElementById('btn-content-view').classList.remove('active');
+      setTimeout(() => map && map.invalidateSize(), 100);
+    }
 
-            document.addEventListener('mouseup', () => {
-                dragging = false;
-                handle.classList.remove('dragging');
-            });
+    function showContentView(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('map-view').style.display = 'none';
+      document.getElementById('content-view').style.display = 'flex';
+      document.getElementById('btn-map-view').classList.remove('active');
+      document.getElementById('btn-content-view').classList.add('active');
+    }
+
+    // ── Content frame ─────────────────────────────────────────────────────────────
+    let contentMode = 'url';
+
+    function setContentMode(mode) {
+      contentMode = mode;
+      document.getElementById('mode-url-btn').classList.toggle('active', mode === 'url');
+      document.getElementById('mode-yt-btn').classList.toggle('active', mode === 'yt');
+      document.getElementById('content-url-input').placeholder =
+        mode === 'yt' ? 'Search YouTube...' : 'Enter URL (https://...)';
+    }
+
+    function loadContent() {
+      const input = document.getElementById('content-url-input').value.trim();
+      if (!input) return;
+      loadUrl(input, contentMode);
+    }
+
+    function loadUrl(input, mode) {
+      showContentView();
+      const frame = document.getElementById('content-frame');
+      const ph = document.getElementById('content-ph');
+      let url = input;
+
+      if (mode === 'yt' || (!input.startsWith('http') && !input.includes('.'))) {
+        // YouTube embed search — use youtube-nocookie for better embed support
+        url = `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(input)}&autoplay=1`;
+      } else if (!input.startsWith('http')) {
+        url = 'https://' + input;
+      }
+
+      ph.style.display = 'none';
+      frame.style.display = 'block';
+      frame.src = url;
+      document.getElementById('map-panel-title').textContent = url.length > 35 ? url.slice(0, 35) + '...' : url;
+    }
+
+    // ── Weather city markers ──────────────────────────────────────────────────────
+    const CITIES = [
+      { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
+      { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
+      { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
+      { name: 'Pune', lat: 18.5204, lon: 73.8567 },
+      { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
+      { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
+      { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
+      { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
+      { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
+      { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
+    ];
+
+    const wxMarkers = [];
+
+    function tempColor(t) {
+      if (t >= 40) return '#ff3344';
+      if (t >= 35) return '#ff8c00';
+      if (t >= 28) return '#ffd740';
+      if (t >= 18) return '#00ff88';
+      return '#00d4ff';
+    }
+
+    async function loadWeather() {
+      wxMarkers.forEach(m => map.removeLayer(m)); wxMarkers.length = 0;
+      try {
+        const results = await Promise.all(CITIES.map(async c => {
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,windspeed_10m`);
+          const d = await r.json();
+          return { ...c, temp: Math.round(d.current.temperature_2m), wind: Math.round(d.current.windspeed_10m) };
+        }));
+
+        results.forEach(c => {
+          const col = tempColor(c.temp);
+          const icon = L.divIcon({
+            html: `<div style="background:${col};border:1px solid rgba(255,255,255,0.4);border-radius:3px;padding:1px 5px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#040810;font-weight:700;white-space:nowrap;box-shadow:0 0 10px ${col}88;">${c.temp}°</div>`,
+            className: '', iconAnchor: [20, 10],
+          });
+          const m = L.marker([c.lat, c.lon], { icon })
+            .bindPopup(`<b style="color:#00d4ff;">${c.name}</b><br>${c.temp}°C | ${c.wind} km/h`)
+            .addTo(map);
+          wxMarkers.push(m);
         });
 
-        // ── Content frame ─────────────────────────────────────────────────────────────
-        let currentContentMode = 'map';
-        let currentUrlMode = 'url';
-
-        function setContentMode(mode, e) {
-            if (e) e.stopPropagation();
-            currentContentMode = mode;
-
-            const mapView = document.getElementById('map-view');
-            const contentView = document.getElementById('content-view');
-
-            document.querySelectorAll('#panel-content .panel-btn').forEach(b => b.classList.remove('active'));
-
-            if (mode === 'map') {
-                mapView.style.display = 'block';
-                contentView.style.display = 'none';
-                document.getElementById('btn-map')?.classList.add('active');
-                document.getElementById('content-title').textContent = 'WORLD MAP';
-                setTimeout(() => map && map.invalidateSize(), 100);
-            } else {
-                mapView.style.display = 'none';
-                contentView.style.display = 'flex';
-                if (mode === 'youtube') {
-                    document.getElementById('btn-yt')?.classList.add('active');
-                    document.getElementById('content-title').textContent = 'YOUTUBE';
-                    document.getElementById('content-url-input').placeholder = 'Search YouTube...';
-                    currentUrlMode = 'youtube';
-                } else {
-                    document.getElementById('btn-web')?.classList.add('active');
-                    document.getElementById('content-title').textContent = 'WEB BROWSER';
-                    document.getElementById('content-url-input').placeholder = 'Enter URL...';
-                    currentUrlMode = 'url';
-                }
-            }
-        }
-
-        function setUrlMode(mode) {
-            currentUrlMode = mode;
-            document.getElementById('mode-url').classList.toggle('active', mode === 'url');
-            document.getElementById('mode-yt').classList.toggle('active', mode === 'youtube');
-            document.getElementById('content-url-input').placeholder =
-                mode === 'youtube' ? 'Search YouTube...' : 'Enter URL (https://...)';
-        }
-
-        function loadContent() {
-            const input = document.getElementById('content-url-input').value.trim();
-            if (!input) return;
-            loadUrl(input, currentUrlMode);
-        }
-
-        function loadUrl(input, mode) {
-            const frame = document.getElementById('content-frame');
-            const placeholder = document.getElementById('content-placeholder');
-            let url = input;
-
-            if (mode === 'youtube' || (!input.startsWith('http') && !input.includes('.'))) {
-                // YouTube search embed
-                const q = encodeURIComponent(input);
-                url = `https://www.youtube.com/embed?listType=search&list=${q}`;
-            } else if (input.startsWith('http')) {
-                url = input;
-            } else {
-                url = 'https://' + input;
-            }
-
-            placeholder.style.display = 'none';
-            frame.style.display = 'block';
-            frame.src = url;
-            setContentMode('web');
-            document.getElementById('content-title').textContent = url.slice(0, 40) + (url.length > 40 ? '...' : '');
-        }
-
-        function loadUrlFromVoice(text) {
-            const match = text.match(/open\s+(https?:\/\/\S+|\S+\.\S+)/i);
-            if (match) loadUrl(match[1], 'url');
-        }
-
-        // ── Waveform visualizer ───────────────────────────────────────────────────────
-        const canvas = document.getElementById('waveform-canvas');
-        const ctx2d = canvas.getContext('2d');
-        let analyser, dataArray, animFrame;
-        let micActive = false;
-
-        async function initMic() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioCtx.createMediaStreamSource(stream);
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 256;
-                source.connect(analyser);
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                micActive = true;
-                drawWaveform();
-                document.getElementById('wf-status').textContent = 'ACTIVE';
-                document.getElementById('wf-status').className = 'wf-status listening';
-            } catch (e) {
-                document.getElementById('wf-status').textContent = 'MIC DENIED';
-            }
-        }
-
-        function drawWaveform() {
-            animFrame = requestAnimationFrame(drawWaveform);
-            const W = canvas.offsetWidth;
-            const H = canvas.offsetHeight;
-            canvas.width = W;
-            canvas.height = H;
-            ctx2d.clearRect(0, 0, W, H);
-
-            const cx = W / 2;
-            const cy = H / 2;
-            const bars = 80;
-            const baseR = H * 0.28;
-
-            if (!analyser) {
-                // Idle — static circle with slow pulse
-                const t = Date.now() / 1000;
-                for (let i = 0; i < bars; i++) {
-                    const angle = (i / bars) * Math.PI * 2;
-                    const pulse = Math.sin(t * 1.5 + i * 0.2) * 2;
-                    const r1 = baseR + pulse;
-                    const r2 = baseR + pulse + 3;
-                    const x1 = cx + Math.cos(angle) * r1;
-                    const y1 = cy + Math.sin(angle) * r1;
-                    const x2 = cx + Math.cos(angle) * r2;
-                    const y2 = cy + Math.sin(angle) * r2;
-                    ctx2d.strokeStyle = 'rgba(0,212,255,0.25)';
-                    ctx2d.lineWidth = 1.5;
-                    ctx2d.beginPath();
-                    ctx2d.moveTo(x1, y1);
-                    ctx2d.lineTo(x2, y2);
-                    ctx2d.stroke();
-                }
-                return;
-            }
-
-            analyser.getByteFrequencyData(dataArray);  // frequency data — more visual
-
-            const maxAmp = Math.max(...dataArray);
-            const isActive = maxAmp > 20;
-
-            // Outer glow ring
-            ctx2d.beginPath();
-            ctx2d.arc(cx, cy, baseR - 2, 0, Math.PI * 2);
-            ctx2d.strokeStyle = isActive ? 'rgba(0,212,255,0.15)' : 'rgba(0,212,255,0.05)';
-            ctx2d.lineWidth = 1;
-            ctx2d.stroke();
-
-            // Radial bars
-            for (let i = 0; i < bars; i++) {
-                const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
-                const dataI = Math.floor((i / bars) * dataArray.length);
-                const val = dataArray[dataI] / 255;
-                const barH = val * H * 0.4 + 2;
-
-                const r1 = baseR;
-                const r2 = baseR + barH;
-
-                const x1 = cx + Math.cos(angle) * r1;
-                const y1 = cy + Math.sin(angle) * r1;
-                const x2 = cx + Math.cos(angle) * r2;
-                const y2 = cy + Math.sin(angle) * r2;
-
-                // Color shifts with amplitude
-                const hue = 185 + val * 40;
-                const alpha = 0.4 + val * 0.6;
-                ctx2d.strokeStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
-                ctx2d.lineWidth = 2;
-                ctx2d.shadowBlur = val > 0.5 ? 8 : 0;
-                ctx2d.shadowColor = '#00d4ff';
-                ctx2d.beginPath();
-                ctx2d.moveTo(x1, y1);
-                ctx2d.lineTo(x2, y2);
-                ctx2d.stroke();
-            }
-
-            ctx2d.shadowBlur = 0;
-
-            // Center dot
-            ctx2d.beginPath();
-            ctx2d.arc(cx, cy, 3, 0, Math.PI * 2);
-            ctx2d.fillStyle = isActive ? '#00d4ff' : 'rgba(0,212,255,0.3)';
-            ctx2d.fill();
-
-            // Status text update
-            document.getElementById('wf-status').textContent = isActive ? 'LISTENING' : 'STANDBY';
-            document.getElementById('wf-status').className = `wf-status ${isActive ? 'listening' : ''}`;
-        }
-
-        drawWaveform();
-        // Auto-init mic after user gesture
-        document.addEventListener('click', () => { if (!micActive) initMic(); }, { once: true });
-
-        // ── WebSocket — Charlie backend ───────────────────────────────────────────────
-        let ws = null;
-        let wsRetryCount = 0;
-
-        function connectWebSocket() {
-            try {
-                ws = new WebSocket('ws://localhost:8765');
-
-                ws.onopen = () => {
-                    wsRetryCount = 0;
-                    const chip = document.getElementById('charlie-status-chip');
-                    const dot = document.getElementById('charlie-dot');
-                    const txt = document.getElementById('charlie-status-text');
-                    chip.className = 'charlie-status online';
-                    dot.classList.add('pulse');
-                    txt.textContent = 'CHARLIE ONLINE';
-                    document.getElementById('charlie-conv').innerHTML = '';
-                    addMessage('charlie', 'Connected. Ready.');
-                };
-
-                ws.onmessage = e => {
-                    const data = JSON.parse(e.data);
-
-                    if (data.type === 'response') {
-                        addMessage('charlie', data.text);
-                        handleVoiceCommand(data.text);
-                    } else if (data.type === 'heard') {
-                        addMessage('user', data.text);
-                        handleVoiceCommand(data.text);
-                    } else if (data.type === 'status') {
-                        document.getElementById('stt-status').textContent = data.stt || '—';
-                        document.getElementById('llm-status').textContent = data.llm || '—';
-                        document.getElementById('mem-status').textContent = data.mem || '—';
-                    } else if (data.type === 'load_url') {
-                        loadUrl(data.url, data.mode || 'url');
-                        focusPanel('content');
-                    } else if (data.type === 'focus_panel') {
-                        focusPanel(data.panel);
-                    } else if (data.type === 'memory') {
-                        updateMemoryFacts(data.facts);
-                    }
-                };
-
-                ws.onclose = () => {
-                    const chip = document.getElementById('charlie-status-chip');
-                    chip.className = 'charlie-status offline';
-                    document.getElementById('charlie-dot').classList.remove('pulse');
-                    document.getElementById('charlie-status-text').textContent = 'CHARLIE OFFLINE';
-                    // Retry connection
-                    if (wsRetryCount < 10) {
-                        wsRetryCount++;
-                        setTimeout(connectWebSocket, 3000);
-                    }
-                };
-
-                ws.onerror = () => ws.close();
-
-            } catch (e) { setTimeout(connectWebSocket, 5000); }
-        }
-
-        function addMessage(role, text) {
-            const conv = document.getElementById('charlie-conv');
-            const msg = document.createElement('div');
-            msg.className = `msg ${role}`;
-            msg.innerHTML = `
-    <div class="msg-role">${role === 'user' ? 'YOU' : 'CHARLIE'}</div>
-    <div class="msg-bubble">${text}</div>
-  `;
-            conv.appendChild(msg);
-            conv.scrollTop = conv.scrollHeight;
-        }
-
-        function sendTextMessage() {
-            const input = document.getElementById('charlie-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            addMessage('user', text);
-            handleVoiceCommand(text); // local panel control
-
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'text_input', text }));
-            }
-
-            input.value = '';
-        }
-
-        function updateMemoryFacts(facts) {
-            const div = document.getElementById('memory-facts');
-            if (!facts || !facts.length) return;
-            div.innerHTML = facts.map(f => `<div class="memory-fact">${f}</div>`).join('');
-        }
-
-        function toggleCharliePanel() {
-            if (panelState.charlie === 'minimized') minimizePanel('charlie');
-            else focusPanel('charlie');
-        }
-
-        connectWebSocket();
-
-        // ── Map ───────────────────────────────────────────────────────────────────────
-        const map = L.map('map', { center: [20, 10], zoom: 2, zoomControl: false, attributionControl: false });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
-
-        function quakeIcon(mag) {
-            const m = parseFloat(mag);
-            const size = m >= 6 ? 18 : m >= 5 ? 14 : 10;
-            const color = m >= 6 ? '#ff3344' : m >= 4.5 ? '#ff8c00' : '#ffd740';
-            return L.divIcon({
-                html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.3);box-shadow:0 0 ${size}px ${color};animation:pulse-map 2s infinite;"></div>`,
-                className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
-            });
-        }
-
-        const quakeMarkers = [];
-
-        async function loadQuakes() {
-            try {
-                const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
-                const data = await res.json();
-                const quakes = data.features.sort((a, b) => b.properties.mag - a.properties.mag).slice(0, 20);
-
-                quakeMarkers.forEach(m => map.removeLayer(m));
-                quakeMarkers.length = 0;
-
-                quakes.forEach(q => {
-                    const [lon, lat] = q.geometry.coordinates;
-                    const mag = q.properties.mag?.toFixed(1) ?? '?';
-                    const m = L.marker([lat, lon], { icon: quakeIcon(mag) })
-                        .bindPopup(`<b>M${mag}</b><br>${q.properties.place}`)
-                        .addTo(map);
-                    quakeMarkers.push(m);
-                });
-
-                document.getElementById('quake-count').textContent = `${quakes.length} SEISMIC EVENTS`;
-
-                document.getElementById('seismic-list').innerHTML = quakes.map(q => {
-                    const mag = q.properties.mag?.toFixed(1) ?? '?';
-                    const place = q.properties.place ?? 'Unknown';
-                    const [lon, lat] = q.geometry.coordinates;
-                    const t = new Date(q.properties.time);
-                    const ts = `${String(t.getUTCHours()).padStart(2, '0')}:${String(t.getUTCMinutes()).padStart(2, '0')}Z`;
-                    const m = parseFloat(mag);
-                    const cls = m >= 6 ? 's-high' : m >= 4.5 ? 's-mid' : m >= 3.5 ? 's-low' : 's-minor';
-                    return `<div class="seismic-item ${cls}">
-        <div class="s-mag">M${mag}</div>
-        <div class="s-info"><div class="s-place">${place}</div><div class="s-coords">${lat?.toFixed(1)}°N ${lon?.toFixed(1)}°E</div></div>
-        <div class="s-time">${ts}</div>
-      </div>`;
-                }).join('');
-
-            } catch (e) {
-                document.getElementById('seismic-list').innerHTML = `<div class="er">USGS error</div>`;
-            }
-        }
-
-        // ── Markets ───────────────────────────────────────────────────────────────────
-        async function loadMarkets() {
-            try {
-                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple&vs_currencies=usd&include_24hr_change=true');
-                const data = await res.json();
-                const items = [
-                    { sym: 'BTC/USD', price: data.bitcoin?.usd, chg: data.bitcoin?.usd_24h_change },
-                    { sym: 'ETH/USD', price: data.ethereum?.usd, chg: data.ethereum?.usd_24h_change },
-                    { sym: 'SOL/USD', price: data.solana?.usd, chg: data.solana?.usd_24h_change },
-                    { sym: 'XRP/USD', price: data.ripple?.usd, chg: data.ripple?.usd_24h_change },
-                ];
-                const html = items.map(i => {
-                    const p = i.price ? (i.price > 100 ? i.price.toLocaleString('en', { maximumFractionDigits: 0 }) : i.price.toFixed(4)) : '—';
-                    const chg = i.chg != null ? i.chg.toFixed(2) : null;
-                    const up = chg != null ? parseFloat(chg) >= 0 : true;
-                    const chgHtml = chg ? `<span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '▲' : '▼'} ${Math.abs(parseFloat(chg)).toFixed(2)}%</span>` : '';
-                    return `<div class="ticker-item"><span class="ticker-sym">${i.sym}</span><span class="ticker-price">$${p}</span>${chgHtml}</div>`;
-                }).join('');
-                const scroll = document.getElementById('ticker-scroll');
-                scroll.innerHTML = html + html;
-            } catch (e) {
-                document.getElementById('ticker-scroll').innerHTML = `<div class="ld">Markets unavailable</div>`;
-            }
-        }
-
-        // ── News ──────────────────────────────────────────────────────────────────────
-        const FEEDS = [
-            { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
-            { name: 'CNN', url: 'http://rss.cnn.com/rss/edition_world.rss' },
-            { name: 'NPR', url: 'https://feeds.npr.org/1001/rss.xml' },
-        ];
-
-        const CATS = {
-            conflict: 'cat-security', war: 'cat-security', attack: 'cat-security', military: 'cat-security',
-            market: 'cat-markets', stock: 'cat-markets', economy: 'cat-markets', fed: 'cat-markets',
-            oil: 'cat-energy', gas: 'cat-energy', opec: 'cat-energy', energy: 'cat-energy',
-            china: 'cat-geo', russia: 'cat-geo', nato: 'cat-geo', sanction: 'cat-geo',
-        };
-
-        const CAT_LABELS = { 'cat-security': 'SECURITY', 'cat-markets': 'MARKETS', 'cat-energy': 'ENERGY', 'cat-geo': 'GEO', 'cat-world': 'WORLD' };
-
-        function categorize(title) {
-            const t = title.toLowerCase();
-            for (const [kw, cls] of Object.entries(CATS)) { if (t.includes(kw)) return cls; }
-            return 'cat-world';
-        }
-
-        async function loadNews() {
-            try {
-                const all = [];
-                await Promise.all(FEEDS.map(async f => {
-                    try {
-                        const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(f.url)}`);
-                        const text = await r.text();
-                        const xml = new DOMParser().parseFromString(text, 'text/xml');
-                        [...xml.querySelectorAll('item')].slice(0, 6).forEach(item => {
-                            const title = item.querySelector('title')?.textContent ?? '';
-                            const link = item.querySelector('link')?.textContent ?? '#';
-                            const pub = item.querySelector('pubDate')?.textContent ?? '';
-                            all.push({ source: f.name, title, link, date: new Date(pub), cat: categorize(title) });
-                        });
-                    } catch (_) { }
-                }));
-                all.sort((a, b) => b.date - a.date);
-                document.getElementById('news-feed').innerHTML = all.slice(0, 25).map(item => {
-                    const h = item.date.getUTCHours(), m = item.date.getUTCMinutes();
-                    const t = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}Z`;
-                    return `<a class="news-item" href="${item.link}" target="_blank" rel="noopener">
-        <div class="news-cat ${item.cat}">${CAT_LABELS[item.cat] || 'WORLD'}</div>
-        <div class="news-headline">${item.title}</div>
-        <div class="news-meta"><span>${item.source.toUpperCase()}</span><span>${t}</span></div>
-      </a>`;
-                }).join('');
-            } catch (e) {
-                document.getElementById('news-feed').innerHTML = `<div class="er">Feed error</div>`;
-            }
-        }
-
-        // ── Weather ───────────────────────────────────────────────────────────────────
-        const CITIES = [
-            { name: 'NYC', lat: 40.71, lon: -74.00 }, { name: 'LON', lat: 51.51, lon: -0.13 },
-            { name: 'TYO', lat: 35.68, lon: 139.69 }, { name: 'DXB', lat: 25.20, lon: 55.27 },
-            { name: 'SYD', lat: -33.87, lon: 151.21 }, { name: 'MOW', lat: 55.75, lon: 37.62 },
-            { name: 'SIN', lat: 1.35, lon: 103.82 }, { name: 'CAI', lat: 30.06, lon: 31.23 },
-            { name: 'MUM', lat: 19.07, lon: 72.88 }, { name: 'LAX', lat: 34.05, lon: -118.24 },
-        ];
-
-        async function loadWeather() {
-            try {
-                const results = await Promise.all(CITIES.map(async c => {
-                    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,windspeed_10m`);
-                    const d = await r.json();
-                    return { name: c.name, temp: Math.round(d.current.temperature_2m), wind: d.current.windspeed_10m };
-                }));
-                document.getElementById('weather-cities').innerHTML = results.map(c =>
-                    `<div class="wx-city">
-        <div class="wx-city-name">${c.name}</div>
-        <div class="wx-city-temp">${c.temp > 0 ? '+' : ''}${c.temp}°</div>
-        <div class="wx-city-wind">${c.wind}kt</div>
+        document.getElementById('city-count').textContent = `${results.length} CITIES`;
+        document.getElementById('weather-cities').innerHTML = results.map(c =>
+          `<div class="wx-city">
+        <div class="wx-city-name">${c.name.substring(0, 3).toUpperCase()}</div>
+        <div class="wx-city-temp" style="color:${tempColor(c.temp)};">${c.temp > 0 ? '+' : ''}${c.temp}°</div>
+        <div class="wx-city-wind">${c.wind}km/h</div>
       </div>`
-                ).join('');
-            } catch (e) {
-                document.getElementById('weather-cities').innerHTML = `<div class="er">Weather unavailable</div>`;
-            }
-        }
+        ).join('');
+      } catch (e) { console.error('Weather error:', e); }
+    }
 
-        // ── Keyboard shortcuts ────────────────────────────────────────────────────────
-        document.addEventListener('keydown', e => {
-            if (e.target.tagName === 'INPUT') return;
-            if (e.key === '1') focusPanel('news');
-            else if (e.key === '2') focusPanel('content');
-            else if (e.key === '3') focusPanel('seismic');
-            else if (e.key === '4') focusPanel('charlie');
-            else if (e.key === '0') resetPanels();
+    // ── Flights ───────────────────────────────────────────────────────────────────
+    const flightMarkers = [];
+
+    async function loadFlights() {
+      try {
+        const res = await fetch('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=37&lomax=97');
+        if (!res.ok) throw new Error('rate limited');
+        const data = await res.json();
+        const states = (data.states || []).filter(s => s[5] && s[6]).slice(0, 100);
+        flightMarkers.forEach(m => map.removeLayer(m)); flightMarkers.length = 0;
+        states.forEach(s => {
+          const icon = L.divIcon({
+            html: `<div style="width:6px;height:6px;background:#00d4ff;border-radius:50%;box-shadow:0 0 6px #00d4ff;"></div>`,
+            className: '', iconSize: [6, 6], iconAnchor: [3, 3],
+          });
+          const m = L.marker([s[6], s[5]], { icon })
+            .bindPopup(`<b>${(s[1] || 'N/A').trim()}</b><br>${s[2] || '—'}<br>Alt:${s[7] || '—'}m`)
+            .addTo(map);
+          flightMarkers.push(m);
         });
+        document.getElementById('flight-count').textContent = `${states.length} FLIGHTS`;
+        document.getElementById('asset-count').textContent = `${states.length + wxMarkers.length} ACTIVE`;
+      } catch (e) {
+        document.getElementById('flight-count').textContent = 'OPENSKY N/A';
+      }
+    }
 
-        // ── Boot ──────────────────────────────────────────────────────────────────────
-        async function boot() {
-            await Promise.all([loadQuakes(), loadMarkets(), loadNews(), loadWeather()]);
+    // ── Markets ───────────────────────────────────────────────────────────────────
+    async function loadMarkets() {
+      try {
+        const [cgRes] = await Promise.all([
+          fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd&include_24hr_change=true'),
+        ]);
+        const cg = await cgRes.json();
+
+        const items = [];
+
+        // Yahoo Finance items (CORS may block, graceful fallback)
+        const yahooSymbols = [
+          { sym: '^NSEI', label: 'NIFTY' },
+          { sym: '^BSESN', label: 'SENSEX' },
+          { sym: 'INR=X', label: 'USD/INR' },
+          { sym: 'EURINR=X', label: 'EUR/INR' },
+          { sym: 'GBPINR=X', label: 'GBP/INR' },
+          { sym: 'GC=F', label: 'GOLD' },
+        ];
+
+        const yResults = await Promise.allSettled(yahooSymbols.map(({ sym, label }) => fetchYahoo(sym, label)));
+        yResults.forEach(r => { if (r.status === 'fulfilled' && r.value) items.push(r.value); });
+
+        // Crypto
+        if (cg.bitcoin) items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '₹' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
+        if (cg.ethereum) items.push({ label: 'ETH/INR', sym: 'ETHINR', price: '₹' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
+        if (cg.solana) items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '₹' + Math.round(cg.solana.inr).toLocaleString('en-IN'), chg: cg.solana.inr_24h_change?.toFixed(2) });
+
+        const html = items.map(i => {
+          const chg = i.chg != null ? parseFloat(i.chg) : null;
+          const up = chg != null ? chg >= 0 : true;
+          const chgHtml = chg != null ? `<span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '▲' : '▼'}${Math.abs(chg).toFixed(2)}%</span>` : '';
+          return `<div class="ticker-item" onclick="openGraph('${i.label}','${i.sym}')">
+        <span class="ticker-sym">${i.label}</span>
+        <span class="ticker-price">${i.price || '—'}</span>
+        ${chgHtml}
+        <span class="ticker-chart-btn">⬡</span>
+      </div>`;
+        }).join('');
+
+        const scroll = document.getElementById('ticker-scroll');
+        scroll.innerHTML = html + html;
+      } catch (e) {
+        document.getElementById('ticker-scroll').innerHTML = '<div class="ld">Markets unavailable</div>';
+      }
+    }
+
+    async function fetchYahoo(symbol, label) {
+      try {
+        const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`, { signal: AbortSignal.timeout(5000) });
+        if (!r.ok) return null;
+        const d = await r.json();
+        const meta = d?.chart?.result?.[0]?.meta;
+        if (!meta) return null;
+        const price = meta.regularMarketPrice;
+        const prev = meta.previousClose || meta.chartPreviousClose;
+        const chg = prev ? ((price - prev) / prev * 100).toFixed(2) : null;
+        const isINR = label.includes('INR') || label === 'NIFTY' || label === 'SENSEX';
+        const pfx = isINR ? '₹' : '$';
+        return { label, sym: symbol, price: `${pfx}${price?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, chg };
+      } catch { return null; }
+    }
+
+    function openGraph(label, sym) {
+      if (!sym || sym === 'BTCINR' || sym === 'ETHINR' || sym === 'SOLINR') {
+        // CoinGecko chart for crypto
+        const cgMap = { BTCINR: 'bitcoin', ETHINR: 'ethereum', SOLINR: 'solana' };
+        const cgId = cgMap[sym];
+        if (cgId) {
+          document.getElementById('graph-frame').src = `https://www.coingecko.com/en/coins/${cgId}/embed`;
         }
+      } else {
+        const tv = `https://www.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=D&theme=dark&style=1&locale=en&toolbar_bg=%23040810`;
+        document.getElementById('graph-frame').src = tv;
+      }
+      document.getElementById('modal-title').textContent = `${label} — CHART`;
+      document.getElementById('graph-modal').classList.add('open');
+    }
 
-        boot();
-        setInterval(boot, 5 * 60 * 1000);
-    </script>
+    function closeGraph() {
+      document.getElementById('graph-modal').classList.remove('open');
+      document.getElementById('graph-frame').src = '';
+    }
+
+    // ── News ──────────────────────────────────────────────────────────────────────
+    const FEEDS = {
+      india: [
+        { name: 'NDTV', url: 'https://feeds.feedburner.com/ndtvnews-top-stories' },
+        { name: 'Hindu', url: 'https://www.thehindu.com/news/national/feeder/default.rss' },
+        { name: 'TOI', url: 'https://timesofindia.indiatimes.com/rssfeedstopstories.cms' },
+      ],
+      global: [
+        { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+        { name: 'Reuters', url: 'https://feeds.reuters.com/reuters/topNews' },
+        { name: 'DW', url: 'https://rss.dw.com/rdf/rss-en-all' },
+      ],
+      sports: [
+        { name: 'BBC Sport', url: 'https://feeds.bbci.co.uk/sport/rss.xml' },
+        { name: 'Sky Sport', url: 'https://www.skysports.com/rss/12040' },
+        { name: 'NDTV Sport', url: 'https://sports.ndtv.com/rss/all' },
+      ],
+    };
+
+    let currentTab = 'india';
+    const newsCache = {};
+
+    const CATS_KW = {
+      sports: ['cricket', 'ipl', 'fifa', 'football', 'tennis', 'f1', 'formula', 'match', 'goal', 'score', 'world cup', 'tournament', 'rugby', 'nba', 'hockey'],
+      markets: ['market', 'stock', 'sensex', 'nifty', 'rupee', 'rbi', 'economy', 'gdp', 'inflation', 'budget', 'trade'],
+      tech: ['ai', 'tech', 'technology', 'startup', 'google', 'apple', 'microsoft', 'openai', 'cyber'],
+      security: ['attack', 'war', 'conflict', 'military', 'bomb', 'terror', 'killed', 'strike', 'explosion'],
+      india: ['india', 'modi', 'delhi', 'mumbai', 'rupee', 'bjp', 'congress', 'hindi', 'rajya', 'lok sabha', 'pm'],
+    };
+
+    function categorize(title) {
+      const t = title.toLowerCase();
+      for (const [cat, kws] of Object.entries(CATS_KW)) {
+        if (kws.some(k => t.includes(k))) {
+          const map2 = { sports: 'cat-sports', markets: 'cat-markets', tech: 'cat-tech', security: 'cat-security', india: 'cat-india' };
+          const lbl = { sports: 'SPORTS', markets: 'MARKETS', tech: 'TECH', security: 'SECURITY', india: 'INDIA' };
+          return [map2[cat], lbl[cat]];
+        }
+      }
+      return ['cat-world', 'WORLD'];
+    }
+
+    async function switchNewsTab(tab) {
+      currentTab = tab;
+      ['india', 'global', 'sports'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === tab));
+      await loadNews(tab);
+    }
+
+    async function loadNews(tab) {
+      const feed = document.getElementById('news-feed');
+      if (newsCache[tab] && Date.now() - newsCache[tab].ts < 5 * 60 * 1000) { feed.innerHTML = newsCache[tab].html; return; }
+      feed.innerHTML = '<div class="ld">Fetching...</div>';
+      try {
+        const all = [];
+        await Promise.all(FEEDS[tab].map(async f => {
+          try {
+            const r = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(f.url)}`, { signal: AbortSignal.timeout(8000) });
+            const txt = await r.text();
+            const xml = new DOMParser().parseFromString(txt, 'text/xml');
+            [...xml.querySelectorAll('item')].slice(0, 8).forEach(item => {
+              const title = item.querySelector('title')?.textContent?.trim() ?? '';
+              const link = item.querySelector('link')?.textContent?.trim() ?? '#';
+              const pub = item.querySelector('pubDate')?.textContent ?? '';
+              if (title) all.push({ source: f.name, title, link, date: new Date(pub), cat: categorize(title) });
+            });
+          } catch (_) { }
+        }));
+        all.sort((a, b) => b.date - a.date);
+        const html = all.slice(0, 30).map(item => {
+          const ist = new Date(item.date.getTime() + (5 * 60 + 30) * 60 * 1000);
+          const ts = isNaN(ist.getTime()) ? '' : ` ${String(ist.getUTCHours()).padStart(2, '0')}:${String(ist.getUTCMinutes()).padStart(2, '0')} IST`;
+          const [cls, lbl] = item.cat;
+          return `<a class="news-item" href="${item.link}" target="_blank" rel="noopener">
+        <div class="news-cat ${cls}">${lbl}</div>
+        <div class="news-headline">${item.title}</div>
+        <div class="news-meta"><span>${item.source}</span><span>${ts}</span></div>
+      </a>`;
+        }).join('') || '<div class="er">No articles loaded — corsproxy may be rate limiting</div>';
+        feed.innerHTML = html;
+        newsCache[tab] = { html, ts: Date.now() };
+      } catch (e) { feed.innerHTML = `<div class="er">Error: ${e.message}</div>`; }
+    }
+
+    // ── Waveform ──────────────────────────────────────────────────────────────────
+    const canvas = document.getElementById('waveform-canvas');
+    const ctx2d = canvas.getContext('2d');
+    let analyser, dataArray, micActive = false;
+    let charlieListening = false; // set by WebSocket
+
+    async function initMic() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const src = ac.createMediaStreamSource(stream);
+        analyser = ac.createAnalyser(); analyser.fftSize = 256;
+        src.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        micActive = true;
+      } catch (e) { document.getElementById('wf-status').textContent = 'MIC DENIED'; }
+    }
+
+    function drawWaveform() {
+      requestAnimationFrame(drawWaveform);
+      const W = canvas.offsetWidth, H = canvas.offsetHeight;
+      canvas.width = W; canvas.height = H; ctx2d.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2, bars = 80, baseR = H * 0.3;
+
+      // Color based on Charlie state
+      const activeColor = charlieListening ? '#00d4ff' : '#2a4060';
+
+      if (!analyser || !micActive) {
+        const t = Date.now() / 1000;
+        for (let i = 0; i < bars; i++) {
+          const angle = (i / bars) * Math.PI * 2;
+          const p = Math.sin(t * (charlieListening ? 2 : 0.8) + i * 0.15) * (charlieListening ? 3 : 1.5);
+          ctx2d.strokeStyle = charlieListening ? 'rgba(0,212,255,0.3)' : 'rgba(42,64,96,0.4)';
+          ctx2d.lineWidth = 1.5;
+          ctx2d.beginPath();
+          ctx2d.moveTo(cx + Math.cos(angle) * (baseR + p), cy + Math.sin(angle) * (baseR + p));
+          ctx2d.lineTo(cx + Math.cos(angle) * (baseR + p + 3), cy + Math.sin(angle) * (baseR + p + 3));
+          ctx2d.stroke();
+        }
+        return;
+      }
+
+      analyser.getByteFrequencyData(dataArray);
+      const maxAmp = Math.max(...dataArray);
+      const isVoice = maxAmp > 25;
+
+      // Show activity only when Charlie is actually listening
+      const showActive = charlieListening && isVoice;
+
+      ctx2d.beginPath(); ctx2d.arc(cx, cy, baseR - 1, 0, Math.PI * 2);
+      ctx2d.strokeStyle = showActive ? 'rgba(0,212,255,0.2)' : 'rgba(42,64,96,0.1)';
+      ctx2d.lineWidth = 1; ctx2d.stroke();
+
+      for (let i = 0; i < bars; i++) {
+        const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
+        const val = dataArray[Math.floor((i / bars) * dataArray.length)] / 255;
+        const barH = (charlieListening ? val : val * 0.2) * H * 0.38 + 1.5;
+        const hue = 185 + val * 40;
+        const alpha = charlieListening ? (0.3 + val * 0.7) : 0.15;
+        ctx2d.strokeStyle = `hsla(${hue},100%,60%,${alpha})`;
+        ctx2d.lineWidth = 2;
+        ctx2d.shadowBlur = (showActive && val > 0.5) ? 8 : 0;
+        ctx2d.shadowColor = '#00d4ff';
+        ctx2d.beginPath();
+        ctx2d.moveTo(cx + Math.cos(angle) * baseR, cy + Math.sin(angle) * baseR);
+        ctx2d.lineTo(cx + Math.cos(angle) * (baseR + barH), cy + Math.sin(angle) * (baseR + barH));
+        ctx2d.stroke();
+      }
+      ctx2d.shadowBlur = 0;
+      ctx2d.beginPath(); ctx2d.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx2d.fillStyle = charlieListening ? '#00d4ff' : '#2a4060'; ctx2d.fill();
+    }
+
+    drawWaveform();
+    document.addEventListener('click', () => { if (!micActive) initMic(); }, { once: true });
+
+    // ── WebSocket ─────────────────────────────────────────────────────────────────
+    let ws = null, wsRetry = 0, pendingSend = false;
+
+    function connectWS() {
+      try {
+        ws = new WebSocket('ws://localhost:8765');
+        ws.onopen = () => {
+          wsRetry = 0;
+          setCharlieStatus('online', 'CHARLIE ONLINE');
+          document.getElementById('charlie-conv').innerHTML = '';
+          addMsg('charlie', 'Connected. Ready.');
+          document.getElementById('stt-status').textContent = 'READY';
+          document.getElementById('llm-status').textContent = 'READY';
+          document.getElementById('mem-status').textContent = 'ACTIVE';
+        };
+        ws.onmessage = e => {
+          const d = JSON.parse(e.data);
+          if (d.type === 'response') {
+            addMsg('charlie', d.text);
+            handleVoiceCommand(d.text);
+            setCharlieStatus('online', 'CHARLIE ONLINE');
+            charlieListening = false;
+            document.getElementById('wf-status').textContent = 'STANDBY';
+            document.getElementById('wf-status').className = 'wf-status';
+          }
+          else if (d.type === 'heard') {
+            addMsg('user', d.text);
+            handleVoiceCommand(d.text);
+          }
+          else if (d.type === 'listening') {
+            charlieListening = d.state;
+            if (d.state) {
+              setCharlieStatus('listening', 'LISTENING...');
+              document.getElementById('wf-status').textContent = 'LISTENING';
+              document.getElementById('wf-status').className = 'wf-status listening';
+            } else {
+              setCharlieStatus('online', 'CHARLIE ONLINE');
+              document.getElementById('wf-status').textContent = 'PROCESSING';
+              document.getElementById('wf-status').className = 'wf-status speaking';
+            }
+          }
+          else if (d.type === 'status') {
+            if (d.stt) document.getElementById('stt-status').textContent = d.stt;
+            if (d.llm) document.getElementById('llm-status').textContent = d.llm;
+            if (d.mem) document.getElementById('mem-status').textContent = d.mem;
+          }
+          else if (d.type === 'load_url') { loadUrl(d.url, d.mode || 'url'); focusPanel('map'); }
+          else if (d.type==='map_region') {
+              setMapRegion(d.region);
+          }
+          else if (d.type==='reset_panels') {
+              resetPanels();
+          }
+          else if (d.type === 'focus_panel') { focusPanel(d.panel); }
+          else if (d.type === 'memory') { updateMemory(d.facts); }
+        };
+        ws.onclose = () => {
+          setCharlieStatus('offline', 'CHARLIE OFFLINE');
+          charlieListening = false;
+          if (wsRetry < 20) { wsRetry++; setTimeout(connectWS, 3000); }
+        };
+        ws.onerror = () => ws.close();
+      } catch (e) { setTimeout(connectWS, 5000); }
+    }
+
+    function setCharlieStatus(state, text) {
+      const chip = document.getElementById('charlie-status-chip');
+      const dot = document.getElementById('charlie-dot');
+      const txt = document.getElementById('charlie-status-text');
+      chip.className = `charlie-status ${state}`;
+      dot.className = `status-dot ${state !== 'offline' ? 'pulse' : ''}`;
+      txt.textContent = text;
+    }
+
+    function addMsg(role, text) {
+      const conv = document.getElementById('charlie-conv');
+      // Remove placeholder
+      const ph = conv.querySelector('.ld');
+      if (ph) ph.remove();
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.innerHTML = `<div class="msg-role">${role === 'user' ? 'YOU' : 'CHARLIE'}</div><div class="msg-bubble">${text}</div>`;
+      conv.appendChild(div);
+      conv.scrollTop = conv.scrollHeight;
+    }
+
+    function handleInputKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMessage(); }
+    }
+
+    function sendTextMessage() {
+      if (pendingSend) return; // prevent double send
+      const input = document.getElementById('charlie-input');
+      const text = input.value.trim();
+      if (!text) return;
+      pendingSend = true;
+      setTimeout(() => pendingSend = false, 300);
+
+      addMsg('user', text);
+      handleVoiceCommand(text);
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'text_input', text }));
+      input.value = '';
+    }
+
+    function updateMemory(facts) {
+      if (!facts || !facts.length) return;
+      document.getElementById('memory-facts').innerHTML = facts.map(f => `<div class="memory-fact">${f}</div>`).join('');
+    }
+
+    connectWS();
+
+    // ── Keyboard shortcuts ────────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === '1') focusPanel('news');
+      else if (e.key === '2') focusPanel('map');
+      else if (e.key === '3') focusPanel('charlie');
+      else if (e.key === '0') resetPanels();
+      else if (e.key === 'Escape') closeGraph();
+      else if (e.key === 'm' || e.key === 'M') showMapView();
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────────────────────
+    async function boot() {
+      await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
+      loadFlights();
+    }
+    boot();
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
+    setInterval(loadFlights, 10 * 60 * 1000);
+  </script>
 </body>
 
 </html>

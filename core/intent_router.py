@@ -9,6 +9,7 @@ Flow:
   4. Offline fallback: local LLM only
 """
 
+from faster_whisper import feature_extractor
 import logging
 from config import is_online, CLOUD_LLM_ENABLED
 
@@ -18,8 +19,11 @@ logger = logging.getLogger("Charlie.router")
 INTENT_KEYWORDS = {
     "whatsapp": ["whatsapp", "send message", "message to", "text to", "send a message"],
     "browser":  ["open", "go to", "visit", "browse", "youtube", "website", "url"],
-    "vision":   ["look at", "what do you see", "camera", "screenshot", "screen"],
+    "vision": ["look at", "what do you see", "camera", "screenshot", "screen", "what on my screen", "what's on my screen"],
     "system":   ["volume up", "volume down", "mute", "open app", "clipboard"],
+    "dashboard": ["show me the map", "global map", "india map", "focus news", 
+               "focus map", "focus charlie", "show news", "reset panels",
+               "show me the dashboard", "open map"],
 }
 
 # ── Shutdown triggers ─────────────────────────────────────────────────────────
@@ -83,6 +87,9 @@ class IntentRouter:
 
             elif intent == "system":
                 return await self.system.handle(text)
+            
+            elif intent == "dashboard":
+                return await self._handle_dashboard_command(text)
 
         except Exception as e:
             logger.error("Action handler error for '%s': %s", intent, e)
@@ -133,3 +140,46 @@ class IntentRouter:
         except Exception as e:
             logger.error("Search decision failed: %s — defaulting to search", e)
             return True  # safer to search than hallucinate
+
+    async def _handle_dashboard_command(self, text: str) -> str:
+        from core import websocket_bridge as ws
+        t = text.lower()
+
+        if "global" in t and "map" in t:
+            await ws.broadcast({"type": "focus_panel", "panel": "map"})
+            await ws.broadcast({"type": "map_region", "region": "global"})
+            return "Switching to global map."
+
+        elif "india" in t and "map" in t:
+            await ws.broadcast({"type": "focus_panel", "panel": "map"})
+            await ws.broadcast({"type": "map_region", "region": "india"})
+            return "Switching to India map."
+
+        elif "news" in t:
+            await ws.broadcast({"type": "focus_panel", "panel": "news"})
+            return "Focusing on news feed."
+
+        elif "charlie" in t and "focus" in t:
+            await ws.broadcast({"type": "focus_panel", "panel": "charlie"})
+            return "Focusing on Charlie panel."
+
+        elif "reset" in t or "normal" in t:
+            await ws.broadcast({"type": "reset_panels"})
+            return "Resetting panels."
+
+        elif "youtube" in t or "play" in t:
+            # Extract query
+            import re
+            m = re.search(r"(?:play|search|find|open)\s+(.+?)\s+(?:on\s+youtube|youtube)?$", t)
+            query = m.group(1).strip() if m else ""
+            if query:
+                url = f"https://www.youtube-nocookie.com/embed?listType=search&list={query.replace(' ','+')}"
+                await ws.broadcast({"type": "load_url", "url": url, "mode": "yt"})
+                await ws.broadcast({"type": "focus_panel", "panel": "map"})
+                return f"Playing {query} on YouTube in dashboard."
+            else:
+                await ws.broadcast({"type": "load_url", "url": "https://www.youtube.com", "mode": "url"})
+                await ws.broadcast({"type": "focus_panel", "panel": "map"})
+                return "Opening YouTube in dashboard."
+
+        return "Done."

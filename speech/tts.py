@@ -49,7 +49,7 @@ class TTS:
         try:
             self._speak_piper(text)
         except Exception as e:
-            logger.error("Piper failed: %s — using fallback TTS", e)
+            logger.error("Piper failed... using fallback TTS")
             self._speak_fallback(text)
 
     # ── Piper TTS ─────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ class TTS:
             [PIPER_BIN, "--model", self.voice_model, "--output_file", audio_path],
             input=text.encode("utf-8"),
             capture_output=True,
-            timeout=30
+            timeout=60
         )
 
         if result.returncode != 0:
@@ -91,13 +91,12 @@ class TTS:
     # ── Fallback TTS ──────────────────────────────────────────────────────────
 
     def _speak_fallback(self, text: str):
-        """pyttsx3 with Windows SAPI5 — works without model files."""
-        try:
-            import pyttsx3
-            engine = pyttsx3.init()
-            engine.setProperty("rate", 175)
-            engine.say(text)
-            engine.runAndWait()
-            engine.stop()
-        except Exception as e:
-            logger.error("Fallback TTS also failed: %s", e)
+        import pyttsx3
+        engine = pyttsx3.init()
+        voices = engine.getProperty('voices')
+        # Index 0 = male (David), Index 1 = female (Zira) on Windows
+        engine.setProperty('voice', voices[0].id)
+        engine.setProperty('rate', 175)
+        engine.say(text)
+        engine.runAndWait()
+        engine.stop()

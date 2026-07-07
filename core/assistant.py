@@ -47,7 +47,7 @@ class Assistant:
         while True:
             try:
                 # ── 1. Wait for wake word ──────────────────────────────────
-                logger.info("Waiting for wake word... say 'Hey Jarvis'")
+                logger.info("Waiting for wake word... say 'charlie'")
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
 

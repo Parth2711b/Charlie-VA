@@ -4,6 +4,7 @@ actions/browser.py — Open websites and perform basic browser actions via Playw
 Install: pip install playwright && python -m playwright install chromium
 """
 
+from faster_whisper import feature_extractor
 import logging
 import re
 import asyncio
@@ -57,6 +58,23 @@ def _extract_url(text: str) -> str:
 
 class BrowserAction:
     async def handle(self, text: str) -> str:
+        async def handle(self, text: str) -> str:
+            text_lower = text.lower()
+            
+            # YouTube search — send to dashboard instead of opening Playwright
+            yt_match = re.search(
+                r"(?:play|search|find)\s+(.+?)\s+(?:on\s+)?youtube", text_lower
+            )
+            if yt_match:
+                query = yt_match.group(1).strip()
+                url = f"https://www.youtube-nocookie.com/embed?listType=search&list={query.replace(' ', '+')}"
+                try:
+                    from core import websocket_bridge as ws
+                    await ws.broadcast({"type": "load_url", "url": url, "mode": "yt"})
+                    await ws.broadcast({"type": "focus_panel", "panel": "map"})
+                    return f"Playing {query} on YouTube in dashboard."
+                except Exception:
+                    pass  # fallback to Playwright below
         url = _extract_url(text)
 
         if not url:
