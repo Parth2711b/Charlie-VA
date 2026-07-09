@@ -47,6 +47,11 @@ async def send_response(text: str):
     await broadcast({"type": "response", "text": text})
 
 
+async def send_audio(base64_data: str):
+    """Send base64 encoded audio to the dashboard for playback."""
+    await broadcast({"type": "audio", "data": base64_data})
+
+
 async def send_status(stt: str = "—", llm: str = "—", mem: str = "—"):
     """Update system status panel on dashboard."""
     await broadcast({"type": "status", "stt": stt, "llm": llm, "mem": mem})

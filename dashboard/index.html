@@ -259,10 +259,25 @@
     }
 
     #panels-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      grid-template-areas:
+        "news map music"
+        "browser map charlie";
+      gap: 10px;
+      padding: 10px;
       flex: 1;
       overflow: hidden;
+      box-sizing: border-box;
     }
+
+    #panel-news { grid-area: news; }
+    #panel-map { grid-area: map; }
+    #panel-music { grid-area: music; }
+    #panel-browser { grid-area: browser; }
+    #panel-charlie { grid-area: charlie; }
+
 
     /* Panel */
     .panel {
@@ -372,43 +387,26 @@
       background: var(--border2);
     }
 
-    .minimized-label {
-      display: none;
-      writing-mode: vertical-rl;
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: var(--muted);
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      padding: 8px 0;
-    }
-
-    .panel.minimized .minimized-label {
-      display: flex;
-    }
-
-    .panel.minimized .panel-body,
-    .panel.minimized .news-tabs {
+    /* Modal overlay */
+    #focus-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(3px);
+      z-index: 9000;
       display: none;
     }
 
-    .panel.minimized .panel-hdr {
-      border-bottom: none;
-    }
-
-    /* Resize handle */
-    .resize-handle {
-      width: 4px;
-      background: transparent;
-      cursor: col-resize;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    }
-
-    .resize-handle:hover,
-    .resize-handle.dragging {
-      background: var(--accent2);
+    .panel.focused {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: 60vw !important;
+      height: 70vh !important;
+      z-index: 9999 !important;
+      box-shadow: 0 0 100px rgba(0,0,0,0.8);
+      border: 1px solid var(--accent);
     }
 
     /* News tabs */
@@ -777,8 +775,10 @@
     }
 
     #waveform-canvas {
-      flex: 1;
+      flex: none;
+      width: 160px;
       height: 44px;
+      margin: 0 10px;
     }
 
     .wf-status {
@@ -956,15 +956,15 @@
   </div>
 
   <div id="workspace">
+    <div id="focus-overlay" onclick="resetPanels()"></div>
     <div id="panels-row">
 
       <!-- NEWS -->
-      <div class="panel" id="panel-news" style="flex:1.2;">
+      <div class="panel" id="panel-news" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-news')">
         <div class="panel-hdr" onclick="handlePanelClick('news')">
           <div class="panel-title">INTEL FEED</div>
           <div class="panel-actions">
-            <button class="panel-btn" onclick="focusPanel('news',event)">⤢ FOCUS</button>
-            <button class="panel-btn" onclick="minimizePanel('news',event)">▂</button>
+            <button class="panel-btn" onclick="focusPanel('news',event)">FOCUS</button>
           </div>
         </div>
         <div class="news-tabs">
@@ -977,25 +977,23 @@
             <div class="ld">Fetching feeds...</div>
           </div>
         </div>
-        <div class="minimized-label">NEWS</div>
       </div>
 
-      <div class="resize-handle" data-panels="news,map"></div>
-
       <!-- MAP / CONTENT -->
-      <div class="panel" id="panel-map" style="flex:2;">
+      <div class="panel" id="panel-map" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-map')">
         <div class="panel-hdr" onclick="handlePanelClick('map')">
           <div class="panel-title" id="map-panel-title">INDIA MAP</div>
           <div class="panel-actions">
-            <button class="panel-btn active" id="btn-map-view" onclick="showMapView(event)">MAP</button>
-            <button class="panel-btn" id="btn-content-view" onclick="showContentView(event)">WEB/YT</button>
             <button class="panel-btn" id="btn-india-zoom" onclick="setMapRegion('india',event)">IND</button>
             <button class="panel-btn" id="btn-global-zoom" onclick="setMapRegion('global',event)">GLB</button>
-            <button class="panel-btn" onclick="focusPanel('map',event)">⤢</button>
-            <button class="panel-btn" onclick="minimizePanel('map',event)">▂</button>
+            <button class="panel-btn" onclick="focusPanel('map',event)">FOCUS</button>
           </div>
         </div>
         <div class="panel-body" id="map-panel-body">
+          <!-- Weather Card Overlay (inside map panel body) -->
+          <div id="weather-card-overlay">
+            <div class="wx-card" id="wx-card-content"></div>
+          </div>
           <!-- Map -->
           <div id="map-view" style="width:100%;height:100%;position:relative;">
             <div id="map"></div>
@@ -1008,40 +1006,81 @@
               </div>
             </div>
           </div>
-          <!-- Content -->
-          <div id="content-view" style="width:100%;height:100%;display:none;flex-direction:column;">
-            <div class="content-input-bar">
-              <button class="panel-btn active" id="mode-url-btn" onclick="setContentMode('url')">URL</button>
-              <button class="panel-btn" id="mode-yt-btn" onclick="setContentMode('yt')">YT</button>
-              <input class="content-input" id="content-url-input" placeholder="Enter URL or YouTube search..."
-                onkeydown="if(event.key==='Enter')loadContent()" />
-              <button class="content-go-btn" onclick="loadContent()">LOAD →</button>
-            </div>
-            <div style="position:relative;flex:1;overflow:hidden;">
-              <div class="content-placeholder" id="content-ph">
-                <div class="big-icon">◈</div>
-                <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;">CONTENT FRAME
-                  READY<br><span style="color:var(--muted);font-size:9px;">Enter a URL or YouTube search above</span>
-                </p>
-              </div>
-              <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;" allowfullscreen
-                allow="autoplay"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
+        </div>
+      </div>
+
+      <!-- MUSIC PANEL -->
+      <div class="panel" id="panel-music" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-music')">
+        <div class="panel-hdr" onclick="handlePanelClick('music')" style="position:relative; z-index:10;">
+          <div class="panel-title">MUSIC</div>
+          <div class="panel-actions">
+            <button class="panel-btn" onclick="focusPanel('music',event)">FOCUS</button>
+          </div>
+        </div>
+        
+        <!-- Dynamic Blurred Background for Glassmorphism -->
+        <div id="music-bg" style="position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;filter:blur(30px) brightness(0.4);z-index:1;transition:background-image 0.5s ease;display:none;"></div>
+        
+        <div class="panel-body" style="position:relative; z-index:10; display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center; height:100%; box-sizing:border-box;">
+          
+          <!-- Empty State (No Music) -->
+          <div id="music-empty-state" style="display:flex; flex-direction:column; align-items:center; gap:15px; color:var(--muted);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+            <div style="font-size:14px; letter-spacing:1px; text-transform:uppercase;">Waiting for music...</div>
+          </div>
+          
+          <!-- Active State -->
+          <div id="music-active-state" style="display:none; flex-direction:column; align-items:center; width:100%; overflow:hidden;">
+            <img id="music-art" src="" style="width:120px;height:120px;border-radius:8px;box-shadow:0 8px 16px rgba(0,0,0,0.8);margin-bottom:15px; transition: transform 0.3s ease; object-fit: cover;" />
+            <div id="music-title" style="font-size:16px;font-weight:900;margin-bottom:4px;color:#ffffff; letter-spacing:-0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">Song Title</div>
+            <div id="music-artist" style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">Artist Name</div>
+            
+            <div style="display:flex;gap:15px;align-items:center; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+              <div id="music-status" style="font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#1db954;">PLAYING</div>
             </div>
           </div>
         </div>
-        <div class="minimized-label">MAP</div>
+      </div>
+      
+      <!-- BROWSER -->
+      <div class="panel" id="panel-browser" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-browser')">
+        <div class="panel-hdr" onclick="handlePanelClick('browser')">
+          <div class="panel-title" id="browser-panel-title">BROWSER</div>
+          <div class="panel-actions">
+            <button class="panel-btn" onclick="focusPanel('browser',event)">FOCUS</button>
+          </div>
+        </div>
+        <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
+          <div class="content-input-bar">
+            <button class="panel-btn active" id="mode-url-btn" onclick="setContentMode('url')">URL</button>
+            <button class="panel-btn" id="mode-yt-btn" onclick="setContentMode('yt')">YT</button>
+            <input class="content-input" id="content-url-input" placeholder="Enter URL or YouTube search..."
+              onkeydown="if(event.key==='Enter')loadContent()" />
+            <button class="content-go-btn" onclick="loadContent()">LOAD →</button>
+          </div>
+          <div style="position:relative;flex:1;overflow:hidden;">
+            <div class="content-placeholder" id="content-ph">
+              <div style="width:32px;height:32px;opacity:0.2;border:1px solid var(--accent);transform:rotate(45deg);"></div>
+              <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;">BROWSER READY<br><span style="color:var(--muted);font-size:9px;">Enter a URL or YouTube search above</span>
+              </p>
+            </div>
+            <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;color-scheme:dark;" allowfullscreen
+              allow="autoplay"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
+          </div>
+        </div>
       </div>
 
-      <div class="resize-handle" data-panels="map,charlie"></div>
-
       <!-- CHARLIE -->
-      <div class="panel" id="panel-charlie" style="flex:1;min-width:250px;">
+      <div class="panel" id="panel-charlie" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-charlie')">
         <div class="panel-hdr" onclick="handlePanelClick('charlie')">
           <div class="panel-title">CHARLIE</div>
           <div class="panel-actions">
-            <button class="panel-btn" onclick="focusPanel('charlie',event)">⤢</button>
-            <button class="panel-btn" onclick="minimizePanel('charlie',event)">▂</button>
+            <button class="panel-btn" onclick="focusPanel('charlie',event)">FOCUS</button>
           </div>
         </div>
         <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
@@ -1066,7 +1105,6 @@
             <button class="charlie-send-btn" id="send-btn" onclick="sendTextMessage()">SEND</button>
           </div>
         </div>
-        <div class="minimized-label">CHARLIE</div>
       </div>
 
     </div>
@@ -1074,13 +1112,32 @@
     <div id="waveform-bar">
       <div class="wf-label">VOICE</div>
       <canvas id="waveform-canvas"></canvas>
+      <button id="mic-btn" title="Click to activate mic" onclick="initMic()" style="background:none;border:1px solid var(--border2);color:var(--accent);font-family:var(--display);font-size:9px;padding:4px 8px;cursor:pointer;letter-spacing:1px;">
+        MIC
+      </button>
       <div class="wf-status" id="wf-status">STANDBY</div>
     </div>
   </div>
 
   <div id="weather-bar">
-    <div class="wx-label">🇮🇳 INDIA</div>
+    <div class="wx-label">INDIA</div>
     <div id="weather-cities" style="display:flex;flex:1;overflow:hidden;"></div>
+  </div>
+
+  <!-- Timer Widget -->
+  <div id="timer-widget">
+    <div class="timer-label">TIMER</div>
+    <div id="timer-display">00:00</div>
+    <button class="timer-cancel-btn" onclick="cancelTimer()">✕ CANCEL</button>
+  </div>
+
+  <!-- Notes Overlay -->
+  <div class="notes-overlay" id="notes-overlay">
+    <div class="notes-hdr">
+      <span>MY NOTES</span>
+      <button class="modal-close" onclick="document.getElementById('notes-overlay').classList.remove('show')">✕ CLOSE</button>
+    </div>
+    <div class="notes-list" id="notes-list"></div>
   </div>
 
   <div id="graph-modal">
@@ -1105,53 +1162,99 @@
     updateClock();
 
     // ── Panel Management ──────────────────────────────────────────────────────────
-    const panelState = { news: 'normal', map: 'normal', charlie: 'normal' };
-    const panelFlex = { news: 1.2, map: 2, charlie: 1 };
+    const panelState = { news: 'normal', map: 'normal', browser: 'minimized', music: 'minimized', charlie: 'normal' };
+    const panelFlex = { news: 1.2, map: 2, browser: 1.5, music: 1.2, charlie: 1 };
 
     function getPanel(id) { return document.getElementById(`panel-${id}`); }
 
     function focusPanel(id, e) {
       if (e) e.stopPropagation();
-      const wasFocused = panelState[id] === 'focused';
-      // Reset all
-      Object.keys(panelState).forEach(k => {
-        panelState[k] = 'normal';
-        const p = getPanel(k);
-        p.classList.remove('focused', 'minimized');
-        p.style.flex = panelFlex[k];
-      });
-      if (!wasFocused) {
-        panelState[id] = 'focused';
-        getPanel(id).classList.add('focused');
-        Object.keys(panelState).filter(k => k !== id).forEach(k => {
-          panelState[k] = 'minimized';
-          getPanel(k).classList.add('minimized');
-          getPanel(k).style.flex = '0 0 38px';
-        });
+      
+      const targetPanel = getPanel(id);
+      if (!targetPanel) return;
+
+      const panels = Array.from(document.querySelectorAll('.panel'));
+      const centerPanel = panels.find(p => getComputedStyle(p).gridArea.split('/')[0].trim() === 'map');
+      
+      if (centerPanel && centerPanel !== targetPanel) {
+        const targetArea = getComputedStyle(targetPanel).gridArea.split('/')[0].trim();
+        
+        targetPanel.style.gridArea = 'map';
+        centerPanel.style.gridArea = targetArea;
+        
+        // Ensure overlay is hidden if previously open
+        document.getElementById('focus-overlay').style.display = 'none';
+        document.querySelectorAll('.panel.focused').forEach(p => p.classList.remove('focused'));
+        
+        setTimeout(() => map && map.invalidateSize(), 400);
       }
-      if (id === 'map' || !wasFocused) setTimeout(() => map && map.invalidateSize(), 420);
     }
 
     function minimizePanel(id, e) {
       if (e) e.stopPropagation();
-      const p = getPanel(id);
-      if (panelState[id] === 'minimized') {
-        panelState[id] = 'normal'; p.classList.remove('minimized'); p.style.flex = panelFlex[id];
-      } else {
-        panelState[id] = 'minimized'; p.classList.add('minimized'); p.style.flex = '0 0 38px';
-      }
+      // "Minimize" in the new Grid context just means returning it to the grid if it was focused.
+      resetPanels();
     }
 
-    function handlePanelClick(id) { if (panelState[id] === 'minimized') minimizePanel(id); }
+    function handlePanelClick(id) {
+      // Not strictly necessary in grid mode unless we want click-to-focus.
+    }
 
     function resetPanels() {
-      Object.keys(panelState).forEach(k => {
-        panelState[k] = 'normal';
-        getPanel(k).classList.remove('focused', 'minimized');
-        getPanel(k).style.flex = panelFlex[k];
-      });
-      setTimeout(() => map && map.invalidateSize(), 420);
+      // Unfocus everything
+      document.querySelectorAll('.panel.focused').forEach(p => p.classList.remove('focused'));
+      document.getElementById('focus-overlay').style.display = 'none';
+      Object.keys(panelState).forEach(k => delete panelState[k]);
+      setTimeout(() => map && map.invalidateSize(), 400);
     }
+
+    // ── Drag and Drop Swapping ───────────────────────────────────────────────────
+    let draggedPanelId = null;
+
+    function handleDragStart(e) {
+      // Allow dragging only from the header
+      if (!e.target.closest('.panel-hdr') && e.target.classList.contains('panel')) {
+        // e.preventDefault(); // Might prevent dragging if they click the body. We rely on draggable="true" on the panel, but check if the click started on header.
+        // Actually, HTML5 drag and drop fires on the draggable element itself. 
+        // We'll just set the data.
+      }
+      draggedPanelId = e.currentTarget.id;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedPanelId);
+      setTimeout(() => e.currentTarget.style.opacity = '0.5', 0);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e, targetPanelId) {
+      e.preventDefault();
+      const draggedEl = document.getElementById(draggedPanelId);
+      const targetEl = document.getElementById(targetPanelId);
+      
+      draggedEl.style.opacity = '1';
+      
+      if (draggedPanelId && draggedPanelId !== targetPanelId) {
+        // Swap grid-area instead of DOM positions
+        const draggedArea = getComputedStyle(draggedEl).gridArea.split('/')[0].trim();
+        const targetArea = getComputedStyle(targetEl).gridArea.split('/')[0].trim();
+        
+        draggedEl.style.gridArea = targetArea;
+        targetEl.style.gridArea = draggedArea;
+        
+        setTimeout(() => map && map.invalidateSize(), 100);
+      }
+      draggedPanelId = null;
+    }
+    
+    // Clean up opacity if drag ends without drop
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList && e.target.classList.contains('panel')) {
+        e.target.style.opacity = '1';
+      }
+    });
 
     // ── Voice command routing ─────────────────────────────────────────────────────
     function handleVoiceCommand(text) {
@@ -1160,37 +1263,16 @@
       if (/focus.*(news|intel|feed)/.test(t)) { focusPanel('news'); return; }
       if (/focus.*(map|screen|world)/.test(t)) { focusPanel('map'); return; }
       if (/focus.*charlie/.test(t)) { focusPanel('charlie'); return; }
+      if (/focus.*(music|spotify|player)/.test(t)) { focusPanel('music'); return; }
       if (/reset|normal view|show all/.test(t)) { resetPanels(); return; }
       // Content commands
-      if (/open.*youtube|show.*youtube|play.*youtube/.test(t)) { showContentView(); setContentMode('yt'); return; }
+      if (/open.*youtube|show.*youtube|play.*youtube/.test(t)) { focusPanel('browser'); setContentMode('yt'); return; }
       if (/show.*news|focus.*news/.test(t)) { focusPanel('news'); switchNewsTab('india'); return; }
-      if (/open.*map|show.*map/.test(t)) { focusPanel('map'); showMapView(); return; }
+      if (/open.*map|show.*map/.test(t)) { focusPanel('map'); return; }
       // URL from Charlie response
       const urlMatch = text.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) { loadUrl(urlMatch[0], 'url'); showContentView(); }
+      if (urlMatch) { loadUrl(urlMatch[0], 'url'); }
     }
-
-    // ── Resize handles ────────────────────────────────────────────────────────────
-    document.querySelectorAll('.resize-handle').forEach(handle => {
-      let dragging = false, startX = 0, lPanel, rPanel, startL, startR;
-      handle.addEventListener('mousedown', e => {
-        e.preventDefault(); dragging = true; startX = e.clientX;
-        handle.classList.add('dragging');
-        const [lId, rId] = handle.dataset.panels.split(',');
-        lPanel = getPanel(lId); rPanel = getPanel(rId);
-        startL = parseFloat(lPanel.style.flex) || panelFlex[lId];
-        startR = parseFloat(rPanel.style.flex) || panelFlex[rId];
-      });
-      document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        const dx = e.clientX - startX, tw = lPanel.parentElement.offsetWidth;
-        const delta = (dx / tw) * (startL + startR);
-        lPanel.style.flex = Math.max(0.15, startL + delta);
-        rPanel.style.flex = Math.max(0.15, startR - delta);
-        map && map.invalidateSize();
-      });
-      document.addEventListener('mouseup', () => { dragging = false; handle.classList.remove('dragging'); });
-    });
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
@@ -1211,24 +1293,6 @@
       }
     }
 
-    // ── Map/Content switcher ──────────────────────────────────────────────────────
-    function showMapView(e) {
-      if (e) e.stopPropagation();
-      document.getElementById('map-view').style.display = 'block';
-      document.getElementById('content-view').style.display = 'none';
-      document.getElementById('btn-map-view').classList.add('active');
-      document.getElementById('btn-content-view').classList.remove('active');
-      setTimeout(() => map && map.invalidateSize(), 100);
-    }
-
-    function showContentView(e) {
-      if (e) e.stopPropagation();
-      document.getElementById('map-view').style.display = 'none';
-      document.getElementById('content-view').style.display = 'flex';
-      document.getElementById('btn-map-view').classList.remove('active');
-      document.getElementById('btn-content-view').classList.add('active');
-    }
-
     // ── Content frame ─────────────────────────────────────────────────────────────
     let contentMode = 'url';
 
@@ -1247,14 +1311,13 @@
     }
 
     function loadUrl(input, mode) {
-      showContentView();
+      focusPanel('browser');
       const frame = document.getElementById('content-frame');
       const ph = document.getElementById('content-ph');
       let url = input;
 
-      if (mode === 'yt' || (!input.startsWith('http') && !input.includes('.'))) {
-        // YouTube embed search — use youtube-nocookie for better embed support
-        url = `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(input)}&autoplay=1`;
+      if (mode === 'yt' && !input.includes('youtube.com/embed')) {
+        url = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(input)}`;
       } else if (!input.startsWith('http')) {
         url = 'https://' + input;
       }
@@ -1262,7 +1325,83 @@
       ph.style.display = 'none';
       frame.style.display = 'block';
       frame.src = url;
-      document.getElementById('map-panel-title').textContent = url.length > 35 ? url.slice(0, 35) + '...' : url;
+      document.getElementById('browser-panel-title').textContent = url.length > 35 ? url.slice(0, 35) + '...' : url;
+    }
+
+    function showRestrictedSite(url) {
+      focusPanel('browser');
+      const frame = document.getElementById('content-frame');
+      const ph = document.getElementById('content-ph');
+      
+      frame.style.display = 'none';
+      frame.src = 'about:blank';
+      
+      ph.innerHTML = `
+        <div style="width:32px;height:32px;opacity:0.8;border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:bold;">!</div>
+        <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;color:var(--red);">
+          RESTRICTED SITE<br>
+          <span style="color:var(--muted);font-size:9px;">${url.length > 40 ? url.slice(0,40)+'...' : url} blocks embedding.<br>Opened securely in host browser.</span>
+        </p>
+      `;
+      ph.style.display = 'flex';
+      ph.style.flexDirection = 'column';
+      ph.style.alignItems = 'center';
+      ph.style.justifyContent = 'center';
+      ph.style.gap = '16px';
+      
+      document.getElementById('browser-panel-title').textContent = "RESTRICTED";
+    }
+
+    let _lastMusicState = false;
+
+    function updateMusicPanel(data) {
+      const art = document.getElementById('music-art');
+      const title = document.getElementById('music-title');
+      const artist = document.getElementById('music-artist');
+      const status = document.getElementById('music-status');
+      const bg = document.getElementById('music-bg');
+      const emptyState = document.getElementById('music-empty-state');
+      const activeState = document.getElementById('music-active-state');
+      
+      if (!data) {
+        bg.style.display = 'none';
+        activeState.style.display = 'none';
+        emptyState.style.display = 'flex';
+        _lastMusicState = false;
+        return;
+      }
+      
+      // Auto-expand logic: if it transitions from not playing to playing, un-minimize the panel!
+      if (data.is_playing && !_lastMusicState) {
+        if (panelState['music'] === 'minimized') {
+          minimizePanel('music');
+        }
+      }
+      _lastMusicState = data.is_playing;
+      
+      emptyState.style.display = 'none';
+      activeState.style.display = 'flex';
+      
+      if (data.art_url) {
+        art.src = data.art_url;
+        bg.style.backgroundImage = `url('${data.art_url}')`;
+        bg.style.display = 'block';
+      } else {
+        bg.style.display = 'none';
+      }
+      
+      title.textContent = data.title;
+      artist.textContent = data.artist;
+      
+      if (data.is_playing) {
+        status.textContent = 'PLAYING';
+        status.style.color = '#1db954'; // Spotify Green
+        art.style.transform = 'scale(1.02)';
+      } else {
+        status.textContent = 'PAUSED';
+        status.style.color = 'rgba(255,255,255,0.5)';
+        art.style.transform = 'scale(0.98)';
+      }
     }
 
     // ── Weather city markers ──────────────────────────────────────────────────────
@@ -1280,14 +1419,6 @@
     ];
 
     const wxMarkers = [];
-
-    function tempColor(t) {
-      if (t >= 40) return '#ff3344';
-      if (t >= 35) return '#ff8c00';
-      if (t >= 28) return '#ffd740';
-      if (t >= 18) return '#00ff88';
-      return '#00d4ff';
-    }
 
     async function loadWeather() {
       wxMarkers.forEach(m => map.removeLayer(m)); wxMarkers.length = 0;
@@ -1326,7 +1457,8 @@
 
     async function loadFlights() {
       try {
-        const res = await fetch('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=37&lomax=97');
+        const url = encodeURIComponent('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=37&lomax=97');
+        const res = await fetch('https://api.allorigins.win/raw?url=' + url);
         if (!res.ok) throw new Error('rate limited');
         const data = await res.json();
         const states = (data.states || []).filter(s => s[5] && s[6]).slice(0, 100);
@@ -1349,42 +1481,43 @@
     }
 
     // ── Markets ───────────────────────────────────────────────────────────────────
+    // Yahoo Finance is CORS-blocked in browsers — only CoinGecko (crypto) works client-side.
+    // Indian indices / forex are shown as placeholders until a server-side proxy is added.
     async function loadMarkets() {
       try {
-        const [cgRes] = await Promise.all([
-          fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd&include_24hr_change=true'),
-        ]);
-        const cg = await cgRes.json();
+        const cgRes = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd&include_24hr_change=true',
+          { signal: AbortSignal.timeout(8000) }
+        ).catch(() => null);
 
         const items = [];
 
-        // Yahoo Finance items (CORS may block, graceful fallback)
-        const yahooSymbols = [
-          { sym: '^NSEI', label: 'NIFTY' },
-          { sym: '^BSESN', label: 'SENSEX' },
-          { sym: 'INR=X', label: 'USD/INR' },
-          { sym: 'EURINR=X', label: 'EUR/INR' },
-          { sym: 'GBPINR=X', label: 'GBP/INR' },
-          { sym: 'GC=F', label: 'GOLD' },
+        // Static placeholders for indices (no browser-accessible free API for these)
+        const staticItems = [
+          { label: 'NIFTY',   sym: '^NSEI',    price: '—', chg: null },
+          { label: 'SENSEX',  sym: '^BSESN',   price: '—', chg: null },
+          { label: 'USD/INR', sym: 'INR=X',    price: '—', chg: null },
+          { label: 'GOLD',    sym: 'GC=F',     price: '—', chg: null },
         ];
+        staticItems.forEach(i => items.push(i));
 
-        const yResults = await Promise.allSettled(yahooSymbols.map(({ sym, label }) => fetchYahoo(sym, label)));
-        yResults.forEach(r => { if (r.status === 'fulfilled' && r.value) items.push(r.value); });
-
-        // Crypto
-        if (cg.bitcoin) items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '₹' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
-        if (cg.ethereum) items.push({ label: 'ETH/INR', sym: 'ETHINR', price: '₹' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
-        if (cg.solana) items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '₹' + Math.round(cg.solana.inr).toLocaleString('en-IN'), chg: cg.solana.inr_24h_change?.toFixed(2) });
+        // Crypto from CoinGecko (CORS-friendly)
+        if (cgRes && cgRes.ok) {
+          const cg = await cgRes.json().catch(() => ({}));
+          if (cg.bitcoin)  items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'),  chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
+          if (cg.ethereum) items.push({ label: 'ETH/INR', sym: 'ETHINR', price: '\u20B9' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
+          if (cg.solana)   items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '\u20B9' + Math.round(cg.solana.inr).toLocaleString('en-IN'),   chg: cg.solana.inr_24h_change?.toFixed(2) });
+        }
 
         const html = items.map(i => {
           const chg = i.chg != null ? parseFloat(i.chg) : null;
           const up = chg != null ? chg >= 0 : true;
-          const chgHtml = chg != null ? `<span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '▲' : '▼'}${Math.abs(chg).toFixed(2)}%</span>` : '';
+          const chgHtml = chg != null ? `<span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '+' : ''}${chg}%</span>` : '';
           return `<div class="ticker-item" onclick="openGraph('${i.label}','${i.sym}')">
         <span class="ticker-sym">${i.label}</span>
-        <span class="ticker-price">${i.price || '—'}</span>
+        <span class="ticker-price">${i.price || '\u2014'}</span>
         ${chgHtml}
-        <span class="ticker-chart-btn">⬡</span>
+        <span class="ticker-chart-btn">CHART</span>
       </div>`;
         }).join('');
 
@@ -1395,21 +1528,6 @@
       }
     }
 
-    async function fetchYahoo(symbol, label) {
-      try {
-        const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`, { signal: AbortSignal.timeout(5000) });
-        if (!r.ok) return null;
-        const d = await r.json();
-        const meta = d?.chart?.result?.[0]?.meta;
-        if (!meta) return null;
-        const price = meta.regularMarketPrice;
-        const prev = meta.previousClose || meta.chartPreviousClose;
-        const chg = prev ? ((price - prev) / prev * 100).toFixed(2) : null;
-        const isINR = label.includes('INR') || label === 'NIFTY' || label === 'SENSEX';
-        const pfx = isINR ? '₹' : '$';
-        return { label, sym: symbol, price: `${pfx}${price?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, chg };
-      } catch { return null; }
-    }
 
     function openGraph(label, sym) {
       if (!sym || sym === 'BTCINR' || sym === 'ETHINR' || sym === 'SOLINR') {
@@ -1520,15 +1638,59 @@
     const ctx2d = canvas.getContext('2d');
     let analyser, dataArray, micActive = false;
     let charlieListening = false; // set by WebSocket
+    let charlieSpeaking = false;  // set by WebSocket
+
+    let audioCtx = null;
+    
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser(); 
+        analyser.fftSize = 256;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+      return audioCtx;
+    }
+
+    async function playCharlieAudio(base64Data) {
+      try {
+        const ac = getAudioContext();
+        if (ac.state === 'suspended') await ac.resume();
+        
+        const binaryString = window.atob(base64Data);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const audioBuffer = await ac.decodeAudioData(bytes.buffer);
+        const source = ac.createBufferSource();
+        source.buffer = audioBuffer;
+        
+        source.connect(analyser); // For visualization
+        source.connect(ac.destination); // For hearing it
+        
+        source.start(0);
+        charlieSpeaking = true;
+        document.getElementById('wf-status').textContent = 'SPEAKING';
+        document.getElementById('wf-status').className = 'wf-status';
+        
+        source.onended = () => {
+          charlieSpeaking = false;
+          document.getElementById('wf-status').textContent = 'STANDBY';
+        };
+      } catch (e) {
+        console.error('Audio playback failed', e);
+      }
+    }
 
     async function initMic() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const ac = getAudioContext();
         const src = ac.createMediaStreamSource(stream);
-        analyser = ac.createAnalyser(); analyser.fftSize = 256;
         src.connect(analyser);
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
         micActive = true;
       } catch (e) { document.getElementById('wf-status').textContent = 'MIC DENIED'; }
     }
@@ -1537,55 +1699,63 @@
       requestAnimationFrame(drawWaveform);
       const W = canvas.offsetWidth, H = canvas.offsetHeight;
       canvas.width = W; canvas.height = H; ctx2d.clearRect(0, 0, W, H);
-      const cx = W / 2, cy = H / 2, bars = 80, baseR = H * 0.3;
+      const cy = H / 2, bars = 32, barWidth = 3, gap = 2;
+      const totalWidth = bars * (barWidth + gap);
+      const startX = (W - totalWidth) / 2;
 
-      // Color based on Charlie state
-      const activeColor = charlieListening ? '#00d4ff' : '#2a4060';
-
-      if (!analyser || !micActive) {
+      if (!analyser || (!micActive && !charlieSpeaking)) {
         const t = Date.now() / 1000;
         for (let i = 0; i < bars; i++) {
-          const angle = (i / bars) * Math.PI * 2;
-          const p = Math.sin(t * (charlieListening ? 2 : 0.8) + i * 0.15) * (charlieListening ? 3 : 1.5);
-          ctx2d.strokeStyle = charlieListening ? 'rgba(0,212,255,0.3)' : 'rgba(42,64,96,0.4)';
-          ctx2d.lineWidth = 1.5;
+          const x = startX + i * (barWidth + gap);
+          let val = 0.05;
+          
+          if (charlieListening) {
+             val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
+          }
+
+          const barH = val * (H * 0.7);
+          const hue = charlieSpeaking ? 140 + val * 40 : 185; // Green to Cyan
+          const alpha = charlieSpeaking ? 0.5 + val * 0.5 : (charlieListening ? 0.3 : 0.15);
+          
+          ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
+          ctx2d.shadowBlur = charlieSpeaking && val > 0.4 ? 10 : 0;
+          ctx2d.shadowColor = `hsla(${hue},100%,60%,1)`;
+          
           ctx2d.beginPath();
-          ctx2d.moveTo(cx + Math.cos(angle) * (baseR + p), cy + Math.sin(angle) * (baseR + p));
-          ctx2d.lineTo(cx + Math.cos(angle) * (baseR + p + 3), cy + Math.sin(angle) * (baseR + p + 3));
-          ctx2d.stroke();
+          ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
+          ctx2d.fill();
         }
+        ctx2d.shadowBlur = 0;
         return;
       }
 
       analyser.getByteFrequencyData(dataArray);
       const maxAmp = Math.max(...dataArray);
-      const isVoice = maxAmp > 25;
-
-      // Show activity only when Charlie is actually listening
-      const showActive = charlieListening && isVoice;
-
-      ctx2d.beginPath(); ctx2d.arc(cx, cy, baseR - 1, 0, Math.PI * 2);
-      ctx2d.strokeStyle = showActive ? 'rgba(0,212,255,0.2)' : 'rgba(42,64,96,0.1)';
-      ctx2d.lineWidth = 1; ctx2d.stroke();
+      const isVoice = maxAmp > 15;
+      const showActive = isVoice || charlieSpeaking;
 
       for (let i = 0; i < bars; i++) {
-        const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
-        const val = dataArray[Math.floor((i / bars) * dataArray.length)] / 255;
-        const barH = (charlieListening ? val : val * 0.2) * H * 0.38 + 1.5;
-        const hue = 185 + val * 40;
-        const alpha = charlieListening ? (0.3 + val * 0.7) : 0.15;
-        ctx2d.strokeStyle = `hsla(${hue},100%,60%,${alpha})`;
-        ctx2d.lineWidth = 2;
-        ctx2d.shadowBlur = (showActive && val > 0.5) ? 8 : 0;
-        ctx2d.shadowColor = '#00d4ff';
+        const x = startX + i * (barWidth + gap);
+        // sample lower frequencies more (speech range)
+        const dataIdx = Math.floor((i / bars) * (dataArray.length * 0.6)); 
+        const rawVal = dataArray[dataIdx] / 255;
+        const val = rawVal * rawVal; // sharp spikes
+        
+        const barH = val * (H * 0.8) + 2; 
+        
+        // Use green for Charlie, cyan for user mic
+        const hue = charlieSpeaking ? 140 + val * 40 : 185 + val * 60;
+        const alpha = charlieSpeaking ? 0.6 + val * 0.4 : 0.3 + val * 0.7;
+        
+        ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
+        ctx2d.shadowBlur = (showActive && val > 0.3) ? 10 : 0;
+        ctx2d.shadowColor = charlieSpeaking ? `hsla(${hue},100%,60%,1)` : '#00d4ff';
+        
         ctx2d.beginPath();
-        ctx2d.moveTo(cx + Math.cos(angle) * baseR, cy + Math.sin(angle) * baseR);
-        ctx2d.lineTo(cx + Math.cos(angle) * (baseR + barH), cy + Math.sin(angle) * (baseR + barH));
-        ctx2d.stroke();
+        ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
+        ctx2d.fill();
       }
       ctx2d.shadowBlur = 0;
-      ctx2d.beginPath(); ctx2d.arc(cx, cy, 3, 0, Math.PI * 2);
-      ctx2d.fillStyle = charlieListening ? '#00d4ff' : '#2a4060'; ctx2d.fill();
     }
 
     drawWaveform();
@@ -1613,8 +1783,9 @@
             handleVoiceCommand(d.text);
             setCharlieStatus('online', 'CHARLIE ONLINE');
             charlieListening = false;
-            document.getElementById('wf-status').textContent = 'STANDBY';
-            document.getElementById('wf-status').className = 'wf-status';
+          }
+          else if (d.type === 'audio') {
+            playCharlieAudio(d.data);
           }
           else if (d.type === 'heard') {
             addMsg('user', d.text);
@@ -1637,15 +1808,21 @@
             if (d.llm) document.getElementById('llm-status').textContent = d.llm;
             if (d.mem) document.getElementById('mem-status').textContent = d.mem;
           }
-          else if (d.type === 'load_url') { loadUrl(d.url, d.mode || 'url'); focusPanel('map'); }
-          else if (d.type==='map_region') {
-              setMapRegion(d.region);
+          else if (d.type === 'load_url') { loadUrl(d.url, d.mode || 'url'); }
+          else if (d.type === 'restricted_site') { showRestrictedSite(d.url); }
+          else if (d.type === 'spotify_update') { updateMusicPanel(d.data); }
+          else if (d.type === 'map_region') { setMapRegion(d.region); }
+          else if (d.type === 'map_city') {
+            const c = CITIES.find(city => city.name.toLowerCase() === d.city.toLowerCase());
+            if (c) map.setView([c.lat, c.lon], 10);
           }
-          else if (d.type==='reset_panels') {
-              resetPanels();
-          }
+          else if (d.type === 'reset_panels') { resetPanels(); }
           else if (d.type === 'focus_panel') { focusPanel(d.panel); }
           else if (d.type === 'memory') { updateMemory(d.facts); }
+          else if (d.type === 'timer_start') { startTimer(d.seconds, d.label); }
+          else if (d.type === 'timer_cancel') { cancelTimer(); }
+          else if (d.type === 'weather_card') { showWeatherCard(d); }
+          else if (d.type === 'show_notes') { showNotes(d.notes); }
         };
         ws.onclose = () => {
           setCharlieStatus('offline', 'CHARLIE OFFLINE');
@@ -1712,6 +1889,85 @@
       else if (e.key === 'Escape') closeGraph();
       else if (e.key === 'm' || e.key === 'M') showMapView();
     });
+
+    // ── Timer ─────────────────────────────────────────────────────────────────────
+    let timerInterval = null;
+    let timerEndTime  = null;
+
+    function startTimer(seconds, label) {
+      if (timerInterval) clearInterval(timerInterval);
+      timerEndTime = Date.now() + seconds * 1000;
+      document.getElementById('timer-widget').classList.add('active');
+      updateTimerDisplay();
+      timerInterval = setInterval(updateTimerDisplay, 500);
+    }
+
+    function updateTimerDisplay() {
+      const rem = Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+      const h = Math.floor(rem / 3600);
+      const m = Math.floor((rem % 3600) / 60);
+      const s = rem % 60;
+      const pad = n => String(n).padStart(2, '0');
+      const disp = document.getElementById('timer-display');
+      disp.textContent = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      disp.classList.toggle('urgent', rem <= 10 && rem > 0);
+      if (rem <= 0) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        disp.textContent = 'DONE!';
+        disp.classList.add('urgent');
+        // Flash the timer widget
+        document.getElementById('timer-widget').style.boxShadow = '0 0 40px rgba(255,51,68,0.8)';
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          document.getElementById('timer-widget').classList.remove('active');
+          document.getElementById('timer-widget').style.boxShadow = '';
+          disp.classList.remove('urgent');
+        }, 5000);
+      }
+    }
+
+    function cancelTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
+      document.getElementById('timer-widget').classList.remove('active');
+    }
+
+    // ── Weather Card ──────────────────────────────────────────────────────────────
+    function tempColor(t) {
+      if (t >= 40) return '#ff3344';
+      if (t >= 35) return '#ff8c00';
+      if (t >= 28) return '#ffd740';
+      if (t >= 18) return '#00ff88';
+      return '#00d4ff';
+    }
+
+    function showWeatherCard(data) {
+      const col = tempColor(parseInt(data.temp_c));
+      document.getElementById('wx-card-content').innerHTML = `
+        <div class="wx-card-city">${data.city.toUpperCase()}</div>
+        <div class="wx-card-temp" style="color:${col}">${data.temp_c}°C</div>
+        <div class="wx-card-desc">${data.description}</div>
+        <div class="wx-card-meta">
+          <span><strong>${data.feels}°C</strong>FEELS LIKE</span>
+          <span><strong>${data.humidity}%</strong>HUMIDITY</span>
+          <span><strong>${data.wind}</strong>KM/H WIND</span>
+        </div>
+      `;
+      document.getElementById('weather-card-overlay').classList.add('show');
+      focusPanel('map');
+    }
+
+    // ── Notes ─────────────────────────────────────────────────────────────────────
+    function showNotes(notes) {
+      const list = document.getElementById('notes-list');
+      if (!notes || notes.length === 0) {
+        list.innerHTML = '<div class="note-item" style="color:var(--muted)">No notes saved.</div>';
+      } else {
+        list.innerHTML = notes.map((n, i) => `<div class="note-item">${i + 1}. ${n}</div>`).join('');
+      }
+      document.getElementById('notes-overlay').classList.add('show');
+    }
 
     // ── Boot ──────────────────────────────────────────────────────────────────────
     async function boot() {

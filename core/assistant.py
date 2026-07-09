@@ -33,13 +33,28 @@ class Assistant:
 
         logger.info("Assistant initialized. Online: %s", is_online())
 
+    async def _speak(self, text: str):
+        """Unified speaking method: route to dashboard if connected, else play locally."""
+        if not text:
+            return
+            
+        if len(self.ws._clients) > 0:
+            logger.info("Streaming audio to dashboard clients...")
+            b64_audio = self.tts.generate_audio_base64(text)
+            if b64_audio:
+                await self.ws.send_audio(b64_audio)
+            else:
+                self.tts.speak(text)
+        else:
+            self.tts.speak(text)
+
     async def run(self):
         """Main loop + WebSocket bridge running concurrently."""
         # Start WebSocket bridge as background task
         ws_task = asyncio.create_task(self.ws.start_server())
         await asyncio.sleep(0.5)  # let server start
 
-        self.tts.speak("Charlie online. Ready.")
+        await self._speak("Charlie online. Ready.")
         await self.ws.send_status(stt="READY", llm="READY", mem="ACTIVE")
 
         logger.info("Entering main loop.")
@@ -52,7 +67,7 @@ class Assistant:
                 await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
 
                 # ── 2. Record + transcribe ────────────────────────────────
-                self.tts.speak("Yes?")
+                await self._speak("Yes?")
                 audio_path = await loop.run_in_executor(None, self.stt.record_audio)
                 text = self.stt.transcribe(audio_path)
 
@@ -64,11 +79,11 @@ class Assistant:
 
             except KeyboardInterrupt:
                 logger.info("Shutting down.")
-                self.tts.speak("Goodbye.")
+                await self._speak("Goodbye.")
                 break
             except Exception as e:
                 logger.error("Unhandled error in main loop: %s", e, exc_info=True)
-                self.tts.speak("Something went wrong. Please try again.")
+                await self._speak("Something went wrong. Please try again.")
 
     async def _handle_text_input(self, text: str):
         """Handle text input from dashboard — same pipeline as voice."""
@@ -87,7 +102,7 @@ class Assistant:
 
         # ── Shutdown command ───────────────────────────────────────────────────
         if response == "__SHUTDOWN__":
-            self.tts.speak("Goodbye.")
+            await self._speak("Goodbye.")
             await self.ws.send_response("Shutting down.")
             import sys
             sys.exit(0)
@@ -106,7 +121,9 @@ class Assistant:
         # ── Speak response ────────────────────────────────────────────────────
         logger.info("Responding: %s", response)
         self.wake_word.pause()
-        self.tts.speak(response)
+        
+        await self._speak(response)
+            
         self.wake_word.resume()
         await asyncio.sleep(1.0)
 

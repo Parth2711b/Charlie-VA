@@ -66,6 +66,10 @@ async def main():
     logger.info("Charlie v2 starting up...")
 
     assistant = Assistant()
+    
+    from handlers.spotify import spotify_sync_loop
+    asyncio.create_task(spotify_sync_loop())
+    
     try:
         await assistant.run()
     finally:
@@ -73,7 +77,12 @@ async def main():
         if dashboard_process:
             dashboard_process.terminate()
             logger.info("Dashboard server stopped.")
-
+        
+        # Force immediate exit to bypass ThreadPoolExecutor waiting on blocking audio threads
+        os._exit(0)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

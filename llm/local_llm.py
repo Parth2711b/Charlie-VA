@@ -1,49 +1,43 @@
 """
 llm/local_llm.py — Ollama API wrapper for local LLM inference.
-Default model: qwen2.5:1.5b (CPU-safe, ~1GB RAM)
 
-Run: ollama pull qwen2.5:1.5b
+Two model instances are used:
+  - RouterLLM  (qwen2.5:1.5b)  — ultra-fast, single-token intent routing
+  - AnswerLLM  (qwen2.5:3b)    — general conversation & search synthesis
+
+Run:
+  ollama pull qwen2.5:1.5b
+  ollama pull qwen2.5:3b
 """
 
 import logging
 import httpx
-import json
-from config import OLLAMA_BASE_URL, OLLAMA_MODEL, MAX_CONTEXT_TURNS
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_ANSWER_MODEL, MAX_CONTEXT_TURNS
 
 logger = logging.getLogger("Charlie.local_llm")
 
-SYSTEM_PROMPT = """You are charlie, a personal AI voice assistant.
-Be concise — your responses will be spoken aloud, so keep them short and conversational.
-No markdown, no bullet points, no asterisks.
-If you don't know something, say so honestly.
-"""
-async def answer_with_context(self, question: str, search_results: str, context: list) -> str:
-    prompt = (
-        f"Answer the following question using ONLY the search results provided below.\n"
-        f"If the answer is in the search results, give it directly and confidently.\n"
-        f"If the search results don't contain the answer, say 'I couldn't find that information.'\n"
-        f"Never make up facts. Keep the answer short — it will be spoken aloud.\n\n"
-        f"Search Results:\n{search_results}\n\n"
-        f"Question: {question}\n\n"
-        f"Answer:"
-    )
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": prompt}
-    ]
-    return await self._call(messages)
+SYSTEM_PROMPT = (
+    "You are Charlie, a personal AI voice assistant. "
+    "Be concise — your responses will be spoken aloud. Keep them short and conversational. "
+    "No markdown, no bullet points, no asterisks. "
+    "If you don't know something, say so honestly."
+)
+
 
 class LocalLLM:
-    def __init__(self):
+    """Wraps a single Ollama model. Instantiate once per model."""
+
+    def __init__(self, model: str | None = None):
         self.base_url = OLLAMA_BASE_URL
-        self.model    = OLLAMA_MODEL
+        self.model = model or OLLAMA_MODEL
         self._check_connection()
 
     def _check_connection(self):
         try:
             r = httpx.get(f"{self.base_url}/api/tags", timeout=5)
             models = [m["name"] for m in r.json().get("models", [])]
-            if not any(self.model.split(":")[0] in m for m in models):
+            base = self.model.split(":")[0]
+            if not any(base in m for m in models):
                 logger.warning(
                     "Model '%s' not found in Ollama. Run: ollama pull %s",
                     self.model, self.model
@@ -57,9 +51,8 @@ class LocalLLM:
     async def chat(self, user_input: str, context: list) -> str:
         """General conversation with context."""
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages += context[-MAX_CONTEXT_TURNS * 2:]   # last N turns only
+        messages += context[-MAX_CONTEXT_TURNS * 2:]
         messages.append({"role": "user", "content": user_input})
-
         return await self._call(messages)
 
     async def answer_with_context(self, question: str, search_results: str, context: list) -> str:
@@ -94,5 +87,18 @@ class LocalLLM:
             data = response.json()
             return data["message"]["content"].strip()
         except Exception as e:
-            logger.error("Ollama call failed: %s", e)
+            import traceback
+            logger.error("Ollama call failed (%s):\n%s", self.model, traceback.format_exc())
             return "I'm having trouble thinking right now. Please try again."
+
+
+# ── Convenience singletons ─────────────────────────────────────────────────────
+
+def get_router_llm() -> LocalLLM:
+    """Tiny 1.5b model — only used for single-token routing decisions."""
+    return LocalLLM(model=OLLAMA_MODEL)
+
+
+def get_answer_llm() -> LocalLLM:
+    """Larger 3b model — used for all actual answers to the user."""
+    return LocalLLM(model=OLLAMA_ANSWER_MODEL)

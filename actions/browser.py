@@ -4,12 +4,9 @@ actions/browser.py — Open websites and perform basic browser actions via Playw
 Install: pip install playwright && python -m playwright install chromium
 """
 
-from faster_whisper import feature_extractor
 import logging
 import re
-import asyncio
-from playwright.async_api import async_playwright
-from config import BROWSER_HEADLESS
+import webbrowser
 
 logger = logging.getLogger("Charlie.browser")
 
@@ -58,23 +55,23 @@ def _extract_url(text: str) -> str:
 
 class BrowserAction:
     async def handle(self, text: str) -> str:
-        async def handle(self, text: str) -> str:
-            text_lower = text.lower()
-            
-            # YouTube search — send to dashboard instead of opening Playwright
-            yt_match = re.search(
-                r"(?:play|search|find)\s+(.+?)\s+(?:on\s+)?youtube", text_lower
-            )
-            if yt_match:
-                query = yt_match.group(1).strip()
-                url = f"https://www.youtube-nocookie.com/embed?listType=search&list={query.replace(' ', '+')}"
-                try:
-                    from core import websocket_bridge as ws
-                    await ws.broadcast({"type": "load_url", "url": url, "mode": "yt"})
-                    await ws.broadcast({"type": "focus_panel", "panel": "map"})
-                    return f"Playing {query} on YouTube in dashboard."
-                except Exception:
-                    pass  # fallback to Playwright below
+        text_lower = text.lower()
+        
+        # YouTube search — send to dashboard instead of opening externally
+        yt_match = re.search(
+            r"(?:play|search|find)\s+(.+?)\s+(?:on\s+)?youtube", text_lower
+        )
+        if yt_match:
+            query = yt_match.group(1).strip()
+            url = f"https://www.youtube-nocookie.com/embed?listType=search&list={query.replace(' ', '+')}"
+            try:
+                from core import websocket_bridge as ws
+                await ws.broadcast({"type": "load_url", "url": url, "mode": "yt"})
+                await ws.broadcast({"type": "focus_panel", "panel": "map"})
+                return f"Playing {query} on YouTube in dashboard."
+            except Exception:
+                pass  # fallback to external browser below
+                
         url = _extract_url(text)
 
         if not url:
@@ -83,16 +80,8 @@ class BrowserAction:
         logger.info("Opening browser: %s", url)
 
         try:
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=BROWSER_HEADLESS)
-                context = await browser.new_context()
-                page    = await context.new_page()
-                await page.goto(url, timeout=15000)
-                await asyncio.sleep(2)  # let page load visually
-                # Don't close — user wants to interact with the page
-                # Browser stays open; just detach
-
+            webbrowser.open(url)
             return f"Opened {url}."
         except Exception as e:
             logger.error("Browser error: %s", e)
-            return f"Couldn't open {url}. Make sure Playwright is installed: python -m playwright install chromium"
+            return f"Couldn't open {url}."

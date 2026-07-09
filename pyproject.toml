@@ -1,0 +1,24 @@
+[tool.pyrefly]
+# Tell Pyrefly where the project root is so it can resolve intra-project imports
+search_path = ["."]
+
+# Ignore the virtual in-memory cell analysis errors
+# (these are false positives from Pyrefly's line-by-line snippet analysis)
+project_includes = [
+    "core",
+    "llm",
+    "handlers",
+    "actions",
+    "speech",
+    "vision",
+    "research",
+    "config.py",
+    "main.py",
+]
+project_excludes = [
+    ".venv/**",
+    "venv/**",
+    "**/__pycache__/**",
+    "models/**",
+    "data/**",
+]

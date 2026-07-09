@@ -76,6 +76,40 @@ class TTS:
         except OSError:
             pass
 
+    def generate_audio_base64(self, text: str) -> str:
+        """Generate speech and return as base64 encoded wav data (does not play audio)."""
+        if not text or not text.strip():
+            return ""
+        
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            audio_path = tmp.name
+
+        result = subprocess.run(
+            [PIPER_BIN, "--model", self.voice_model, "--output_file", audio_path],
+            input=text.encode("utf-8"),
+            capture_output=True,
+            timeout=60
+        )
+
+        if result.returncode != 0:
+            logger.error("Piper failed in generate_audio_base64: %s", result.stderr.decode())
+            return ""
+
+        import base64
+        try:
+            with open(audio_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+        except Exception as e:
+            logger.error("Failed to read generated wav: %s", e)
+            b64 = ""
+
+        try:
+            os.unlink(audio_path)
+        except OSError:
+            pass
+        
+        return b64
+
     # ── Playback ──────────────────────────────────────────────────────────────
 
     def _play_wav(self, path: str):
