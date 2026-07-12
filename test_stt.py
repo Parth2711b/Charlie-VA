@@ -54,7 +54,7 @@ async def ask_llm(user_input: str) -> str:
             "role": "system",
             "content": (
                 "You are Charlie, a personal AI voice assistant. "
-                "Be concise — responses will be spoken aloud. "
+                "Be concise - responses will be spoken aloud. "
                 "No markdown, no bullet points, no asterisks."
             )
         },

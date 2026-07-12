@@ -12,7 +12,14 @@ load_dotenv()
 # We need these scopes to read the current playing track and control playback
 SCOPE = "user-read-currently-playing user-read-playback-state user-modify-playback-state"
 
+# Cache the client so we don't re-create OAuth on every single call
+_spotify_client: Optional[spotipy.Spotify] = None
+
 def get_spotify_client() -> Optional[spotipy.Spotify]:
+    global _spotify_client
+    if _spotify_client is not None:
+        return _spotify_client
+    
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
     client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
     redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://localhost:8080/callback")
@@ -30,7 +37,8 @@ def get_spotify_client() -> Optional[spotipy.Spotify]:
             scope=SCOPE,
             open_browser=True # Opens browser for initial auth
         )
-        return spotipy.Spotify(auth_manager=auth_manager)
+        _spotify_client = spotipy.Spotify(auth_manager=auth_manager)
+        return _spotify_client
     except Exception as e:
         logger.error(f"Failed to initialize Spotify client: {e}")
         return None

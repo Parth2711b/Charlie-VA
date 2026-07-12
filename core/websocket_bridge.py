@@ -1,5 +1,5 @@
 """
-core/websocket_bridge.py — WebSocket server bridging Charlie (Python) and Dashboard (Browser).
+core/websocket_bridge.py - WebSocket server bridging Charlie (Python) and Dashboard (Browser).
 Runs as a background task alongside the main assistant loop.
 
 Dashboard connects to ws://localhost:8765
@@ -17,6 +17,11 @@ logger = logging.getLogger("charlie.ws_bridge")
 
 # ── Connected clients ──────────────────────────────────────────────────────────
 _clients: set[ServerConnection] = set()
+
+
+def has_clients() -> bool:
+    """Check if any dashboard clients are connected. Use this instead of accessing _clients directly."""
+    return len(_clients) > 0
 
 
 # ── Broadcast to all dashboard clients ────────────────────────────────────────
@@ -52,7 +57,12 @@ async def send_audio(base64_data: str):
     await broadcast({"type": "audio", "data": base64_data})
 
 
-async def send_status(stt: str = "—", llm: str = "—", mem: str = "—"):
+async def send_stop_audio():
+    """Tell dashboard to instantly stop audio playback."""
+    await broadcast({"type": "stop_audio"})
+
+
+async def send_status(stt: str = "-", llm: str = "-", mem: str = "-"):
     """Update system status panel on dashboard."""
     await broadcast({"type": "status", "stt": stt, "llm": llm, "mem": mem})
 
@@ -72,9 +82,14 @@ async def send_memory(facts: list[str]):
     await broadcast({"type": "memory", "facts": facts})
 
 
+async def send_interview_mode(active: bool):
+    """Tell dashboard to show/hide the interview mode indicator."""
+    await broadcast({"type": "interview_mode", "active": active})
+
+
 # ── Incoming message handler ──────────────────────────────────────────────────
 
-# Callback — set by assistant.py to handle text input from dashboard
+# Callback - set by assistant.py to handle text input from dashboard
 _on_text_input = None
 
 
@@ -126,5 +141,5 @@ async def start_server(host: str = "localhost", port: int = 8765):
     """Start the WebSocket server. Call this as an asyncio task."""
     logger.info("WebSocket bridge starting on ws://%s:%d", host, port)
     async with websockets.serve(_handle_client, host, port):
-        logger.info("WebSocket bridge ready — dashboard can connect.")
+        logger.info("WebSocket bridge ready - dashboard can connect.")
         await asyncio.Future()  # run forever

@@ -1,5 +1,5 @@
 """
-Charlie v2 — Entry Point
+Charlie v2 - Entry Point
 Starts dashboard server, opens browser, then runs the assistant.
 """
 

@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Two Sum",
+    "description": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+    "solution": "Use a hash map to store the difference between the target and the current number. Time Complexity: O(n). Space Complexity: O(n)."
+  },
+  {
+    "title": "Valid Parentheses",
+    "description": "Given a string containing just the characters parentheses, brackets, and braces, determine if the input string is valid. Open brackets must be closed by the same type of brackets in the correct order.",
+    "solution": "Use a stack data structure. Push open brackets onto the stack. For close brackets, check if it matches the top of the stack and pop it. Time Complexity: O(n). Space Complexity: O(n)."
+  },
+  {
+    "title": "Linked List Cycle",
+    "description": "Given the head of a linked list, determine if the linked list has a cycle in it.",
+    "solution": "Use Floyd's Tortoise and Hare algorithm. Use two pointers, one slow and one fast. If they ever meet, there is a cycle. Time Complexity: O(n). Space Complexity: O(1)."
+  }
+]

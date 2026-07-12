@@ -1,5 +1,5 @@
 """
-vision/ocr.py — Extract text from images using pytesseract.
+vision/ocr.py - Extract text from images using pytesseract.
 Useful for reading documents, whiteboards, screenshots.
 
 Windows: install Tesseract from https://github.com/UB-Mannheim/tesseract/wiki
@@ -13,7 +13,7 @@ from PIL import Image
 
 logger = logging.getLogger("Charlie.ocr")
 
-# Windows Tesseract path — update if installed elsewhere
+# Windows Tesseract path - update if installed elsewhere
 TESSERACT_CMD = os.getenv("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 if os.path.exists(TESSERACT_CMD):
     pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD

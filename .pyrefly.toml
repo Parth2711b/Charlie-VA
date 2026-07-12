@@ -1,10 +1,10 @@
 # Pyrefly configuration
 # https://github.com/facebook/pyrefly
 
-# Python interpreter — use the venv if available, else system Python
+# Python interpreter - use the venv if available, else system Python
 python_interpreter = ".venv/Scripts/python.exe"
 
-# Source paths — tell Pyrefly all project packages are relative to this root
+# Source paths - tell Pyrefly all project packages are relative to this root
 search_path = ["."]
 
 # Exclude non-source directories

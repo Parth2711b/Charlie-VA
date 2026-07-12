@@ -1,7 +1,7 @@
 """
-speech/tts.py — Text-to-speech via Piper TTS.
+speech/tts.py - Text-to-speech via Piper TTS.
 Piper is fast, offline, and light on CPU.
-winsound used for playback on Windows — no media player window opens.
+winsound used for playback on Windows - no media player window opens.
 
 Setup:
   - Piper binary: https://github.com/rhasspy/piper/releases
@@ -28,6 +28,7 @@ PIPER_BIN  = os.getenv("PIPER_BIN", "piper")
 class TTS:
     def __init__(self):
         self.voice_model = os.path.join(MODELS_DIR, f"{TTS_VOICE}.onnx")
+        self._last_audio_path = None  # tracks last played file for cleanup
 
         if not os.path.exists(self.voice_model):
             logger.warning(
@@ -39,23 +40,35 @@ class TTS:
 
     # ── Public Interface ───────────────────────────────────────────────────────
 
-    def speak(self, text: str):
-        """Convert text to speech and play it. Falls back to pyttsx3 on error."""
+    def speak(self, text: str) -> float:
+        """Convert text to speech and play it. Falls back to pyttsx3 on error. Returns duration."""
         if not text or not text.strip():
-            return
+            return 0.0
 
         logger.debug("Speaking: %s", text[:80])
 
         try:
-            self._speak_piper(text)
+            return self._speak_piper(text)
         except Exception as e:
             logger.error("Piper failed... using fallback TTS")
-            self._speak_fallback(text)
+            return self._speak_fallback(text)
 
     # ── Piper TTS ─────────────────────────────────────────────────────────────
 
-    def _speak_piper(self, text: str):
-        """Generate speech with Piper and play via winsound (no browser window)."""
+    def _speak_piper(self, text: str) -> float:
+        """Generate speech with Piper, play async, and return duration in seconds."""
+        import wave
+
+        # Clean up the PREVIOUS audio file (it's done playing by now).
+        # We can't delete immediately after play because Windows SND_ASYNC
+        # needs the file to exist while it plays. But by the NEXT speak call,
+        # the old audio is definitely finished.
+        if self._last_audio_path:
+            try:
+                os.unlink(self._last_audio_path)
+            except OSError:
+                pass  # file already gone, that's fine
+
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             audio_path = tmp.name
 
@@ -63,18 +76,24 @@ class TTS:
             [PIPER_BIN, "--model", self.voice_model, "--output_file", audio_path],
             input=text.encode("utf-8"),
             capture_output=True,
-            timeout=60
+            timeout=300
         )
 
         if result.returncode != 0:
             raise RuntimeError(f"Piper error: {result.stderr.decode()}")
 
-        self._play_wav(audio_path)
-
+        duration = 0.0
         try:
-            os.unlink(audio_path)
-        except OSError:
-            pass
+            with wave.open(audio_path, 'r') as f:
+                frames = f.getnframes()
+                rate = f.getframerate()
+                duration = frames / float(rate)
+        except Exception as e:
+            logger.error("Failed to read wav duration: %s", e)
+
+        self._play_wav(audio_path)
+        self._last_audio_path = audio_path  # track it for cleanup next time
+        return duration
 
     def generate_audio_base64(self, text: str) -> str:
         """Generate speech and return as base64 encoded wav data (does not play audio)."""
@@ -88,7 +107,7 @@ class TTS:
             [PIPER_BIN, "--model", self.voice_model, "--output_file", audio_path],
             input=text.encode("utf-8"),
             capture_output=True,
-            timeout=60
+            timeout=300
         )
 
         if result.returncode != 0:
@@ -113,24 +132,33 @@ class TTS:
     # ── Playback ──────────────────────────────────────────────────────────────
 
     def _play_wav(self, path: str):
-        """Play wav file. Windows: winsound (no popup). Mac/Linux: system player."""
+        """Play wav file async. Windows: winsound. Mac/Linux: system player in background."""
         if platform.system() == "Windows":
             import winsound
-            winsound.PlaySound(path, winsound.SND_FILENAME)
+            winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
         elif platform.system() == "Darwin":
-            subprocess.run(["afplay", path], check=True)
+            subprocess.Popen(["afplay", path])
         else:
-            subprocess.run(["aplay", path], check=True)
+            subprocess.Popen(["aplay", path])
+
+    def stop(self):
+        """Stop any currently playing audio."""
+        if platform.system() == "Windows":
+            import winsound
+            winsound.PlaySound(None, winsound.SND_PURGE)
+        else:
+            subprocess.run(["pkill", "-f", "afplay|aplay"], capture_output=True)
 
     # ── Fallback TTS ──────────────────────────────────────────────────────────
 
-    def _speak_fallback(self, text: str):
+    def _speak_fallback(self, text: str) -> float:
         import pyttsx3
         engine = pyttsx3.init()
         voices = engine.getProperty('voices')
-        # Index 0 = male (David), Index 1 = female (Zira) on Windows
         engine.setProperty('voice', voices[0].id)
         engine.setProperty('rate', 175)
+        # pyttsx3 blocks, so duration is just an estimate.
         engine.say(text)
         engine.runAndWait()
         engine.stop()
+        return len(text) / 15.0  # rough estimate for wait time if we were async

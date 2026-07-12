@@ -1,5 +1,5 @@
 """
-speech/stt.py — Speech-to-text using faster-whisper.
+speech/stt.py - Speech-to-text using faster-whisper.
 CPU-optimized: int8 compute type for speed on non-GPU machines.
 """
 
@@ -42,7 +42,7 @@ HALLUCINATION_PHRASES = [  # known Whisper hallucinations on silence
 class STT:
     def __init__(self):
         logger.info("Loading Whisper model: %s (CPU, int8)", WHISPER_MODEL)
-        # int8 = fastest on CPU, minor quality tradeoff — fine for voice commands
+        # int8 = fastest on CPU, minor quality tradeoff - fine for voice commands
         self.model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
         self.audio = pyaudio.PyAudio()
         logger.info("Whisper ready.")
@@ -73,7 +73,7 @@ class STT:
             if amplitude < SILENCE_THRESHOLD:
                 silent_chunks += 1
                 if speech_chunks >= MIN_SPEECH_CHUNKS and silent_chunks >= max_silent:
-                    logger.debug("Silence detected after speech — stopping early.")
+                    logger.debug("Silence detected after speech - stopping early.")
                     break
             else:
                 speech_chunks += 1
@@ -98,7 +98,7 @@ class STT:
         logger.info("Raw transcription: '%s' (lang_prob=%.2f)", text, info.language_probability)
 
         if not self._is_valid(text):
-            logger.info("Transcription rejected — likely silence or hallucination.")
+            logger.info("Transcription rejected - likely silence or hallucination.")
             return ""
 
         return text

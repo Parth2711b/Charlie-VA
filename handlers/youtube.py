@@ -1,5 +1,5 @@
 """
-handlers/youtube.py — Play YouTube videos inside the dashboard panel.
+handlers/youtube.py - Play YouTube videos inside the dashboard panel.
 Searches YouTube server-side (no API key needed) to get a real video ID,
 then sends an embeddable URL to the dashboard via WebSocket.
 """
@@ -34,7 +34,7 @@ def _extract_query(text: str) -> str:
 async def _get_first_video_id(query: str) -> str:
     """
     Search YouTube's website server-side and extract the first video ID.
-    No API key required — parses the videoId JSON embedded in the HTML.
+    No API key required - parses the videoId JSON embedded in the HTML.
     Returns empty string on failure.
     """
     try:
@@ -82,5 +82,5 @@ async def handle(text: str) -> str:
     else:
         import webbrowser
         webbrowser.open(f"https://www.youtube.com/results?search_query={quote_plus(query)}")
-        logger.warning("YouTube scrape failed for '%s' — opened in browser", query)
-        return f"Couldn't embed '{query}' — opened YouTube search in your browser instead."
+        logger.warning("YouTube scrape failed for '%s' - opened in browser", query)
+        return f"Couldn't embed '{query}' - opened YouTube search in your browser instead."

@@ -1,7 +1,7 @@
 # ── Secrets ───────────────────────────────────────────────────────────────────
 .env
 
-# ── Personal data — NEVER commit these ────────────────────────────────────────
+# ── Personal data - NEVER commit these ────────────────────────────────────────
 data/memory.db
 data/contacts.json
 data/logs/

@@ -1,5 +1,5 @@
 """
-actions/whatsapp.py — Send WhatsApp messages via pywhatkit (WhatsApp Web).
+actions/whatsapp.py - Send WhatsApp messages via pywhatkit (WhatsApp Web).
 
 Requirements:
   - Chrome browser open with WhatsApp Web logged in
@@ -17,7 +17,7 @@ from config import WHATSAPP_DEFAULT_WAIT
 
 logger = logging.getLogger("Charlie.whatsapp")
 
-# Common contacts — store here or load from a local contacts.json (gitignored)
+# Common contacts - store here or load from a local contacts.json (gitignored)
 # Format: {"name": "+91XXXXXXXXXX"}
 CONTACTS: dict[str, str] = {}
 

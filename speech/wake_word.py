@@ -1,7 +1,7 @@
 """
-speech/wake_word.py — Keyword-based wake word detection via Vosk.
+speech/wake_word.py - Keyword-based wake word detection via Vosk.
 Continuously listens for the keyword "charlie" in a small audio window.
-No account, no binary, no cloud — fully offline.
+No account, no binary, no cloud - fully offline.
 """
 
 import json
@@ -21,7 +21,7 @@ FORMAT   = pyaudio.paInt16
 CHANNELS = 1
 RATE     = 16000
 
-# ── Wake keywords — any of these trigger activation ───────────────────────────
+# ── Wake keywords - any of these trigger activation ───────────────────────────
 WAKE_KEYWORDS = ["charlie", "charley", "charly"]
 
 # ── Vosk model path ───────────────────────────────────────────────────────────

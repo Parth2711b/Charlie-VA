@@ -1,5 +1,5 @@
 """
-handlers/web.py — Load any URL in the dashboard content panel.
+handlers/web.py - Load any URL in the dashboard content panel.
 """
 
 import re
@@ -25,7 +25,7 @@ SITE_SHORTCUTS = {
     "whatsapp":  "https://web.whatsapp.com",
 }
 
-# These sites block iframes — open in OS browser instead
+# These sites block iframes - open in OS browser instead
 IFRAME_BLOCKERS = {"netflix", "spotify", "gmail", "google", "youtube"}
 
 

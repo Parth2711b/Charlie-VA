@@ -1,5 +1,5 @@
 """
-handlers/notes.py — Save and retrieve notes. Stored in data/notes.json.
+handlers/notes.py - Save and retrieve notes. Stored in data/notes.json.
 Offline, instant. Shows notes in the Charlie panel on the dashboard.
 """
 

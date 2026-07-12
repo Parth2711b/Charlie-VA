@@ -1,5 +1,5 @@
 """
-handlers/weather.py — Fetch weather and display a card in the dashboard.
+handlers/weather.py - Fetch weather and display a card in the dashboard.
 Uses wttr.in (free, no API key) for offline-friendly weather data.
 """
 
@@ -31,7 +31,7 @@ async def handle(text: str) -> str:
 
     try:
         async with httpx.AsyncClient(timeout=8) as client:
-            # wttr.in JSON API — no key needed
+            # wttr.in JSON API - no key needed
             r = await client.get(
                 f"https://wttr.in/{city.replace(' ', '+')}?format=j1",
                 headers={"User-Agent": "Charlie-VA/2.0"}

@@ -1,5 +1,5 @@
 """
-config.py — All settings in one place.
+config.py - All settings in one place.
 Override via .env file or environment variables.
 """
 
@@ -43,10 +43,15 @@ MAX_CONTEXT_TURNS  = int(os.getenv("MAX_CONTEXT_TURNS", "10"))
 
 # ── Network ───────────────────────────────────────────────────────────────────
 def is_online() -> bool:
+    """Quick connectivity check. Socket is properly closed after use."""
     import socket
     try:
-        socket.setdefaulttimeout(3)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
+        # Create a socket with its OWN timeout (not global)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3)  # per-socket timeout, doesn't affect other sockets
+        sock.connect(("8.8.8.8", 53))
+        sock.close()  # explicitly close — no leak!
         return True
     except OSError:
         return False
+

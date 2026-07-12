@@ -1,6 +1,6 @@
 # Charlie v2
 
-Personal AI voice assistant — offline-first, online-capable.
+Personal AI voice assistant - offline-first, online-capable.
 
 **Stack:** faster-whisper · OpenWakeWord · Piper TTS · Ollama · DuckDuckGo · pywhatkit · Playwright · YOLOv8
 
@@ -10,13 +10,13 @@ Personal AI voice assistant — offline-first, online-capable.
 
 - Wake word activation (offline)
 - Speech-to-text via faster-whisper (offline)
-- Local LLM via Ollama — works without internet (offline)
+- Local LLM via Ollama - works without internet (offline)
 - Web research via DuckDuckGo + LLM summarization (online)
 - WhatsApp messaging via WhatsApp Web (online)
-- Browser automation — open sites, navigate (online)
+- Browser automation - open sites, navigate (online)
 - Screen capture + OCR description (offline)
 - Camera feed + YOLOv8 object detection (offline)
-- SQLite memory — context across sessions
+- SQLite memory - context across sessions
 
 ---
 
@@ -56,7 +56,7 @@ python -m playwright install chromium
 **Tesseract OCR** (for screen/document reading)
 ```
 Windows installer: https://github.com/UB-Mannheim/tesseract/wiki
-Install to default path — config.py handles it automatically
+Install to default path - config.py handles it automatically
 ```
 
 ### 3. Configure
@@ -80,7 +80,7 @@ python main.py
 
 ## Contacts (WhatsApp)
 
-Create `data/contacts.json` (gitignored — never committed):
+Create `data/contacts.json` (gitignored - never committed):
 
 ```json
 {

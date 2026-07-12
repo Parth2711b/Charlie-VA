@@ -1,4 +1,4 @@
-# Charlie v2 — Python dependencies
+# Charlie v2 - Python dependencies
 # Install: pip install -r requirements.txt
 # Python 3.11+ recommended
 
@@ -13,13 +13,13 @@ pyaudio>=0.2.14
 # ── Speech: Wake Word ─────────────────────────────────────────────────────────
 openwakeword>=0.6.0
 
-# ── Speech: TTS (Piper is a binary — install separately, see README)
+# ── Speech: TTS (Piper is a binary - install separately, see README)
 # pyttsx3 is the Windows fallback only
 pyttsx3>=2.90
 
 # ── LLM ───────────────────────────────────────────────────────────────────────
-# Ollama itself is a binary — install from https://ollama.ai
-anthropic>=0.30.0          # Cloud LLM (optional — only if CLOUD_LLM_ENABLED=true)
+# Ollama itself is a binary - install from https://ollama.ai
+anthropic>=0.30.0          # Cloud LLM (optional - only if CLOUD_LLM_ENABLED=true)
 
 # ── Research ──────────────────────────────────────────────────────────────────
 duckduckgo-search>=6.0.0

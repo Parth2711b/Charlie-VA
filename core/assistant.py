@@ -1,5 +1,5 @@
 """
-core/assistant.py — Main orchestrator.
+core/assistant.py - Main orchestrator.
 Ties together: wake word → STT → intent → action → TTS
 WebSocket bridge sends all events to dashboard in real time.
 """
@@ -24,29 +24,35 @@ class Assistant:
         self.wake_word = WakeWordDetector()
         self.stt       = STT()
         self.tts       = TTS()
-        self.router    = IntentRouter()
         self.memory    = Memory()
+        self.router    = IntentRouter(self.memory)
         self.ws        = ws
+
+        self.is_interviewing = False
+        self.is_processing = False
+        from handlers.interviewer_agent import InterviewerAgent
+        self.interviewer = InterviewerAgent(self.memory)
 
         # Register dashboard text input handler
         ws.set_text_input_handler(self._handle_text_input)
 
         logger.info("Assistant initialized. Online: %s", is_online())
 
-    async def _speak(self, text: str):
-        """Unified speaking method: route to dashboard if connected, else play locally."""
+    async def _speak(self, text: str) -> float:
+        """Unified speaking method: route to dashboard if connected, else play locally. Returns duration."""
         if not text:
-            return
+            return 0.0
             
-        if len(self.ws._clients) > 0:
+        if self.ws.has_clients():
             logger.info("Streaming audio to dashboard clients...")
             b64_audio = self.tts.generate_audio_base64(text)
             if b64_audio:
                 await self.ws.send_audio(b64_audio)
+                return len(text) / 15.0  # Estimate: ~15 chars per sec for TTS
             else:
-                self.tts.speak(text)
+                return self.tts.speak(text)
         else:
-            self.tts.speak(text)
+            return self.tts.speak(text)
 
     async def run(self):
         """Main loop + WebSocket bridge running concurrently."""
@@ -57,14 +63,20 @@ class Assistant:
         await self._speak("Charlie online. Ready.")
         await self.ws.send_status(stt="READY", llm="READY", mem="ACTIVE")
 
-        logger.info("Entering main loop.")
+        self.barge_in_triggered = False
 
         while True:
             try:
-                # ── 1. Wait for wake word ──────────────────────────────────
-                logger.info("Waiting for wake word... say 'charlie'")
+                # Get event loop ONCE at the top — avoids UnboundLocalError
                 loop = asyncio.get_event_loop()
-                await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+
+                # ── 1. Wait for wake word ──────────────────────────────────
+                if not self.barge_in_triggered:
+                    logger.info("Waiting for wake word... say 'charlie'")
+                    await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+                else:
+                    logger.info("Barge-in triggered, skipping wake word wait.")
+                    self.barge_in_triggered = False
 
                 # ── 2. Record + transcribe ────────────────────────────────
                 await self._speak("Yes?")
@@ -86,19 +98,53 @@ class Assistant:
                 await self._speak("Something went wrong. Please try again.")
 
     async def _handle_text_input(self, text: str):
-        """Handle text input from dashboard — same pipeline as voice."""
+        """Handle text input from dashboard - same pipeline as voice."""
         await self._process(text)
 
     async def _process(self, text: str):
         """Core pipeline: text → intent → response → speak + dashboard update."""
+        if self.is_processing:
+            logger.warning("Already processing a query. Ignoring: %s", text)
+            return
+            
+        self.is_processing = True
+        try:
+            await self._process_inner(text)
+        finally:
+            self.is_processing = False
+
+    async def _process_inner(self, text: str):
         logger.info("Heard: %s", text)
         await self.ws.send_heard(text)
 
         # ── Load memory context ────────────────────────────────────────────
         context = self.memory.get_context()
 
+        # ── RAG Context Injection (New) ───────────────────────────────────
+        relevant_facts = self.memory.search_facts(text)
+        if relevant_facts:
+            facts_str = "\n- ".join(relevant_facts)
+            # We secretly insert these facts into the context so the LLM reads them
+            context.append({
+                "role": "system", 
+                "content": f"Relevant background facts about the user:\n- {facts_str}"
+            })
+
         # ── Route intent → get response ───────────────────────────────────
-        response = await self.router.route(text, context)
+        if self.is_interviewing:
+            if any(w in text.lower() for w in ["stop interview", "end interview", "stop the interview", "quit interview"]):
+                self.is_interviewing = False
+                await self.ws.send_interview_mode(False)
+                response = "Interview mode ended. Back to normal assistant mode."
+                self.interviewer.reset()
+            else:
+                response = await self.interviewer.chat(text)
+        else:
+            response = await self.router.route(text, context)
+            if response == "__START_INTERVIEW__":
+                self.is_interviewing = True
+                await self.ws.send_interview_mode(True)
+                response = await self.interviewer.start_interview()
 
         # ── Shutdown command ───────────────────────────────────────────────────
         if response == "__SHUTDOWN__":
@@ -120,12 +166,25 @@ class Assistant:
 
         # ── Speak response ────────────────────────────────────────────────────
         logger.info("Responding: %s", response)
-        self.wake_word.pause()
         
-        await self._speak(response)
+        duration = await self._speak(response)
+        
+        if duration > 0:
+            logger.info("Listening for barge-in for %.1fs...", duration)
+            loop = asyncio.get_event_loop()
+            listen_task = loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
             
-        self.wake_word.resume()
-        await asyncio.sleep(1.0)
+            try:
+                # Wait for the audio duration. If wake word finishes first, it throws no error.
+                await asyncio.wait_for(listen_task, timeout=duration)
+                logger.info("Barge-in detected!")
+                self.tts.stop()
+                await self.ws.send_stop_audio()
+                self.barge_in_triggered = True
+            except asyncio.TimeoutError:
+                # Finished speaking naturally, no barge-in.
+                # IMPORTANT: Cancel the orphaned listener so its audio stream closes!
+                listen_task.cancel()
+                pass
 
-        # ── Cooldown ──────────────────────────────────────────────────────────
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(0.5)

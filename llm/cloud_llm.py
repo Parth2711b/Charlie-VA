@@ -1,6 +1,6 @@
 """
-llm/cloud_llm.py — Claude API for when internet is available and CLOUD_LLM_ENABLED=true.
-Only used if explicitly enabled — local LLM is always the default.
+llm/cloud_llm.py - Claude API for when internet is available and CLOUD_LLM_ENABLED=true.
+Only used if explicitly enabled - local LLM is always the default.
 """
 
 import logging
@@ -10,7 +10,7 @@ from config import ANTHROPIC_API_KEY, CLOUD_MODEL, MAX_CONTEXT_TURNS
 logger = logging.getLogger("charlie.cloud_llm")
 
 SYSTEM_PROMPT = """You are charlie, a personal AI voice assistant.
-Be concise — your responses will be spoken aloud, so keep them short and conversational.
+Be concise - your responses will be spoken aloud, so keep them short and conversational.
 No markdown, no bullet points, no asterisks.
 If you don't know something, say so honestly.
 """

@@ -4,21 +4,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Charlie — Intel Command</title>
+  <title>Charlie - Intel Command</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&display=swap');
 
     :root {
-      --bg: #040810;
-      --surface: #070d14;
-      --panel: #0a1520;
-      --border: #0f2035;
-      --border2: #1a3050;
+      /* Default Modern Dark Theme */
+      --bg: radial-gradient(circle at top right, #091221, #040810);
+      --surface: rgba(7, 13, 20, 0.6);
+      --panel: rgba(10, 21, 32, 0.45);
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.12);
       --text: #8ab4d4;
       --text2: #c8dff0;
-      --muted: #2a4060;
+      --muted: #4a6885;
       --accent: #00d4ff;
       --accent2: #007aa8;
       --green: #00ff88;
@@ -27,9 +28,54 @@
       --orange: #ff8c00;
       --purple: #cc44ff;
       --saffron: #ff9933;
-      --mono: 'Share Tech Mono', monospace;
+      --mono: 'Inter', sans-serif; /* Modernized to Inter */
       --display: 'Orbitron', monospace;
       --body: 'Space Grotesk', sans-serif;
+      --radius: 12px;
+      --blur: blur(24px);
+    }
+
+    body.theme-jarvis {
+      --bg: radial-gradient(circle at top right, #1a0f07, #0a0502);
+      --surface: rgba(28, 16, 10, 0.6);
+      --panel: rgba(41, 23, 14, 0.45);
+      --border: rgba(255, 150, 100, 0.1);
+      --border2: rgba(255, 150, 100, 0.2);
+      --text: #e8b090; --text2: #ffdac7; --muted: #8c5b42;
+      --accent: #ff5e00; --accent2: #cc4b00;
+      --green: #44ff00; --red: #ff1100;
+    }
+
+    body.theme-hacker {
+      --bg: radial-gradient(circle at top right, #001f00, #000000);
+      --surface: rgba(0, 20, 0, 0.6);
+      --panel: rgba(0, 31, 0, 0.45);
+      --border: rgba(0, 255, 0, 0.15);
+      --border2: rgba(0, 255, 0, 0.25);
+      --text: #4dff4d; --text2: #80ff80; --muted: #008800;
+      --accent: #00ff00; --accent2: #00cc00;
+    }
+
+    body.theme-cyberpunk {
+      --bg: radial-gradient(circle at top right, #2a0936, #090212);
+      --surface: rgba(28, 6, 36, 0.6);
+      --panel: rgba(42, 9, 54, 0.45);
+      --border: rgba(255, 0, 255, 0.15);
+      --border2: rgba(255, 0, 255, 0.25);
+      --text: #df8cf0; --text2: #f2c9fa; --muted: #8b3c9e;
+      --accent: #ff00ff; --accent2: #cc00cc;
+      --green: #00ffcc;
+    }
+
+    body.theme-ember {
+      --bg: radial-gradient(circle at top right, #331206, #0d0401);
+      --surface: rgba(38, 23, 15, 0.6);
+      --panel: rgba(51, 30, 20, 0.45);
+      --border: rgba(255, 85, 0, 0.12);
+      --border2: rgba(255, 85, 0, 0.2);
+      --text: #ffb380; --text2: #ffd9c2; --muted: #995533;
+      --accent: #ff5500; --accent2: #cc4400;
+      --green: #ffcc00;
     }
 
     * {
@@ -45,25 +91,28 @@
       color: var(--text);
       font-family: var(--mono);
       overflow: hidden;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
     }
 
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.05) 2px, rgba(0, 0, 0, 0.05) 4px);
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.015) 2px, rgba(255, 255, 255, 0.015) 4px);
       pointer-events: none;
       z-index: 9999;
     }
 
     /* Header */
     #header {
-      height: 36px;
+      height: 44px;
       background: var(--surface);
+      backdrop-filter: var(--blur);
       border-bottom: 1px solid var(--border2);
       display: flex;
       align-items: center;
-      padding: 0 12px;
+      padding: 0 20px;
       gap: 0;
       z-index: 100;
       flex-shrink: 0;
@@ -254,7 +303,7 @@
     #workspace {
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 36px - 26px - 46px);
+      height: calc(100vh - 44px - 26px - 46px);
       overflow: hidden;
     }
 
@@ -265,18 +314,32 @@
       grid-template-areas:
         "news map music"
         "browser map charlie";
-      gap: 10px;
-      padding: 10px;
+      gap: 16px;
+      padding: 16px;
       flex: 1;
       overflow: hidden;
       box-sizing: border-box;
     }
 
-    #panel-news { grid-area: news; }
-    #panel-map { grid-area: map; }
-    #panel-music { grid-area: music; }
-    #panel-browser { grid-area: browser; }
-    #panel-charlie { grid-area: charlie; }
+    #panel-news {
+      grid-area: news;
+    }
+
+    #panel-map {
+      grid-area: map;
+    }
+
+    #panel-music {
+      grid-area: music;
+    }
+
+    #panel-browser {
+      grid-area: browser;
+    }
+
+    #panel-charlie {
+      grid-area: charlie;
+    }
 
 
     /* Panel */
@@ -284,15 +347,19 @@
       display: flex;
       flex-direction: column;
       background: var(--surface);
-      border-right: 1px solid var(--border);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       overflow: hidden;
-      transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+      transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, transform 0.3s;
       position: relative;
       min-width: 0;
     }
 
-    .panel:last-child {
-      border-right: none;
+    .panel:hover {
+      border-color: var(--border2);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
     }
 
     .panel.focused {
@@ -300,24 +367,24 @@
     }
 
     .panel.minimized {
-      flex: 0 0 38px !important;
+      flex: 0 0 44px !important;
       opacity: 0.6;
     }
 
     .panel-hdr {
-      padding: 6px 10px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
       cursor: pointer;
-      background: var(--panel);
+      background: transparent;
       user-select: none;
     }
 
     .panel-hdr:hover {
-      background: var(--border);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .panel-title {
@@ -390,8 +457,11 @@
     /* Modal overlay */
     #focus-overlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.3);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(3px);
       z-index: 9000;
       display: none;
@@ -405,7 +475,7 @@
       width: 60vw !important;
       height: 70vh !important;
       z-index: 9999 !important;
-      box-shadow: 0 0 100px rgba(0,0,0,0.8);
+      box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
       border: 1px solid var(--accent);
     }
 
@@ -577,15 +647,15 @@
 
     .content-input {
       flex: 1;
-      background: var(--bg);
+      background: rgba(0, 0, 0, 0.2);
       border: 1px solid var(--border2);
       color: var(--text2);
       font-family: var(--mono);
-      font-size: 11px;
-      padding: 3px 8px;
+      font-size: 12px;
+      padding: 6px 12px;
       outline: none;
-      border-radius: 2px;
-      height: 24px;
+      border-radius: var(--radius);
+      height: 28px;
     }
 
     .content-input:focus {
@@ -597,11 +667,12 @@
       border: none;
       color: var(--text2);
       font-family: var(--mono);
-      font-size: 10px;
-      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 14px;
       cursor: pointer;
-      border-radius: 2px;
-      height: 24px;
+      border-radius: var(--radius);
+      height: 28px;
     }
 
     .content-go-btn:hover {
@@ -657,11 +728,12 @@
     }
 
     .msg-bubble {
-      padding: 7px 10px;
-      border-radius: 2px;
-      font-family: var(--body);
-      font-size: 11px;
-      line-height: 1.4;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .msg.user .msg-role {
@@ -670,18 +742,18 @@
     }
 
     .msg.user .msg-bubble {
-      background: rgba(0, 212, 255, 0.08);
-      border: 1px solid var(--accent2);
-      color: var(--text2);
+      background: var(--accent2);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #ffffff;
       align-self: flex-end;
-      max-width: 92%;
+      max-width: 90%;
     }
 
     .msg.charlie .msg-bubble {
-      background: var(--panel);
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border2);
-      color: var(--text);
-      max-width: 96%;
+      color: var(--text2);
+      max-width: 94%;
     }
 
     .memory-section {
@@ -706,11 +778,12 @@
     }
 
     .memory-fact {
-      font-size: 9px;
-      color: var(--text);
-      padding: 2px 6px;
-      background: var(--panel);
-      border-left: 2px solid var(--accent2);
+      font-size: 10px;
+      color: var(--text2);
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 4px 4px 0;
     }
 
     .charlie-input-area {
@@ -723,14 +796,14 @@
 
     .charlie-input {
       flex: 1;
-      background: var(--bg);
+      background: rgba(0, 0, 0, 0.2);
       border: 1px solid var(--border2);
       color: var(--text2);
       font-family: var(--mono);
-      font-size: 11px;
-      padding: 5px 10px;
+      font-size: 13px;
+      padding: 8px 14px;
       outline: none;
-      border-radius: 2px;
+      border-radius: var(--radius);
     }
 
     .charlie-input:focus {
@@ -740,14 +813,15 @@
     .charlie-send-btn {
       background: var(--accent2);
       border: none;
-      color: var(--text2);
+      color: #ffffff;
       font-family: var(--mono);
-      font-size: 10px;
-      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 16px;
       cursor: pointer;
       letter-spacing: 1px;
-      border-radius: 2px;
-      transition: background 0.15s;
+      border-radius: var(--radius);
+      transition: background 0.15s, transform 0.1s;
     }
 
     .charlie-send-btn:hover {
@@ -937,9 +1011,13 @@
       <div class="h-meta-item"><span class="label">ENC:</span><span class="val">AES-256-GCM</span></div>
       <div class="h-meta-item"><span class="label">UPLINK:</span><span class="val"
           style="color:var(--green)">NOMINAL</span></div>
-      <div class="h-meta-item"><span class="label">ASSETS:</span><span class="val" id="asset-count">—</span></div>
+      <div class="h-meta-item"><span class="label">ASSETS:</span><span class="val" id="asset-count">-</span></div>
     </div>
     <div class="h-right">
+      <div id="interview-badge" class="charlie-status" style="display: none; border-color: var(--red); color: var(--red);">
+        <div class="status-dot pulse" style="background: var(--red);"></div>
+        <span>INTERVIEW ACTIVE</span>
+      </div>
       <div id="charlie-status-chip" class="charlie-status offline">
         <div class="status-dot" id="charlie-dot"></div>
         <span id="charlie-status-text">CHARLIE OFFLINE</span>
@@ -960,7 +1038,8 @@
     <div id="panels-row">
 
       <!-- NEWS -->
-      <div class="panel" id="panel-news" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-news')">
+      <div class="panel" id="panel-news" draggable="true" ondragstart="handleDragStart(event)"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-news')">
         <div class="panel-hdr" onclick="handlePanelClick('news')">
           <div class="panel-title">INTEL FEED</div>
           <div class="panel-actions">
@@ -980,7 +1059,8 @@
       </div>
 
       <!-- MAP / CONTENT -->
-      <div class="panel" id="panel-map" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-map')">
+      <div class="panel" id="panel-map" draggable="true" ondragstart="handleDragStart(event)"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-map')">
         <div class="panel-hdr" onclick="handlePanelClick('map')">
           <div class="panel-title" id="map-panel-title">INDIA MAP</div>
           <div class="panel-actions">
@@ -999,10 +1079,10 @@
             <div id="map"></div>
             <div class="map-overlay">
               <div class="map-stat">
-                <div class="map-dot dot-flight"></div><span id="flight-count">— FLIGHTS</span>
+                <div class="map-dot dot-flight"></div><span id="flight-count">- FLIGHTS</span>
               </div>
               <div class="map-stat">
-                <div class="map-dot dot-weather"></div><span id="city-count">— CITIES</span>
+                <div class="map-dot dot-weather"></div><span id="city-count">- CITIES</span>
               </div>
             </div>
           </div>
@@ -1010,44 +1090,59 @@
       </div>
 
       <!-- MUSIC PANEL -->
-      <div class="panel" id="panel-music" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-music')">
+      <div class="panel" id="panel-music" draggable="true" ondragstart="handleDragStart(event)"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-music')">
         <div class="panel-hdr" onclick="handlePanelClick('music')" style="position:relative; z-index:10;">
           <div class="panel-title">MUSIC</div>
           <div class="panel-actions">
             <button class="panel-btn" onclick="focusPanel('music',event)">FOCUS</button>
           </div>
         </div>
-        
+
         <!-- Dynamic Blurred Background for Glassmorphism -->
-        <div id="music-bg" style="position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;filter:blur(30px) brightness(0.4);z-index:1;transition:background-image 0.5s ease;display:none;"></div>
-        
-        <div class="panel-body" style="position:relative; z-index:10; display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center; height:100%; box-sizing:border-box;">
-          
+        <div id="music-bg"
+          style="position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;filter:blur(30px) brightness(0.4);z-index:1;transition:background-image 0.5s ease;display:none;">
+        </div>
+
+        <div class="panel-body"
+          style="position:relative; z-index:10; display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;text-align:center; height:100%; box-sizing:border-box;">
+
           <!-- Empty State (No Music) -->
-          <div id="music-empty-state" style="display:flex; flex-direction:column; align-items:center; gap:15px; color:var(--muted);">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;">
+          <div id="music-empty-state"
+            style="display:flex; flex-direction:column; align-items:center; gap:15px; color:var(--muted);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5;">
               <path d="M9 18V5l12-2v13"></path>
               <circle cx="6" cy="18" r="3"></circle>
               <circle cx="18" cy="16" r="3"></circle>
             </svg>
             <div style="font-size:14px; letter-spacing:1px; text-transform:uppercase;">Waiting for music...</div>
           </div>
-          
+
           <!-- Active State -->
-          <div id="music-active-state" style="display:none; flex-direction:column; align-items:center; width:100%; overflow:hidden;">
-            <img id="music-art" src="" style="width:120px;height:120px;border-radius:8px;box-shadow:0 8px 16px rgba(0,0,0,0.8);margin-bottom:15px; transition: transform 0.3s ease; object-fit: cover;" />
-            <div id="music-title" style="font-size:16px;font-weight:900;margin-bottom:4px;color:#ffffff; letter-spacing:-0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">Song Title</div>
-            <div id="music-artist" style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">Artist Name</div>
-            
-            <div style="display:flex;gap:15px;align-items:center; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
-              <div id="music-status" style="font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#1db954;">PLAYING</div>
+          <div id="music-active-state"
+            style="display:none; flex-direction:column; align-items:center; width:100%; overflow:hidden;">
+            <img id="music-art" src=""
+              style="width:120px;height:120px;border-radius:8px;box-shadow:0 8px 16px rgba(0,0,0,0.8);margin-bottom:15px; transition: transform 0.3s ease; object-fit: cover;" />
+            <div id="music-title"
+              style="font-size:16px;font-weight:900;margin-bottom:4px;color:#ffffff; letter-spacing:-0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">
+              Song Title</div>
+            <div id="music-artist"
+              style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">
+              Artist Name</div>
+
+            <div
+              style="display:flex;gap:15px;align-items:center; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+              <div id="music-status" style="font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#1db954;">PLAYING
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- BROWSER -->
-      <div class="panel" id="panel-browser" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-browser')">
+      <div class="panel" id="panel-browser" draggable="true" ondragstart="handleDragStart(event)"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-browser')">
         <div class="panel-hdr" onclick="handlePanelClick('browser')">
           <div class="panel-title" id="browser-panel-title">BROWSER</div>
           <div class="panel-actions">
@@ -1064,19 +1159,22 @@
           </div>
           <div style="position:relative;flex:1;overflow:hidden;">
             <div class="content-placeholder" id="content-ph">
-              <div style="width:32px;height:32px;opacity:0.2;border:1px solid var(--accent);transform:rotate(45deg);"></div>
-              <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;">BROWSER READY<br><span style="color:var(--muted);font-size:9px;">Enter a URL or YouTube search above</span>
+              <div style="width:32px;height:32px;opacity:0.2;border:1px solid var(--accent);transform:rotate(45deg);">
+              </div>
+              <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;">BROWSER READY<br><span
+                  style="color:var(--muted);font-size:9px;">Enter a URL or YouTube search above</span>
               </p>
             </div>
-            <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;color-scheme:dark;" allowfullscreen
-              allow="autoplay"
+            <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;color-scheme:dark;"
+              allowfullscreen allow="autoplay"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
           </div>
         </div>
       </div>
 
       <!-- CHARLIE -->
-      <div class="panel" id="panel-charlie" draggable="true" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-charlie')">
+      <div class="panel" id="panel-charlie" draggable="true" ondragstart="handleDragStart(event)"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event, 'panel-charlie')">
         <div class="panel-hdr" onclick="handlePanelClick('charlie')">
           <div class="panel-title">CHARLIE</div>
           <div class="panel-actions">
@@ -1086,9 +1184,9 @@
         <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
           <div
             style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:9px;display:flex;gap:12px;flex-shrink:0;">
-            <span>STT:<span id="stt-status" style="color:var(--muted);margin-left:4px;">—</span></span>
-            <span>LLM:<span id="llm-status" style="color:var(--muted);margin-left:4px;">—</span></span>
-            <span>MEM:<span id="mem-status" style="color:var(--muted);margin-left:4px;">—</span></span>
+            <span>STT:<span id="stt-status" style="color:var(--muted);margin-left:4px;">-</span></span>
+            <span>LLM:<span id="llm-status" style="color:var(--muted);margin-left:4px;">-</span></span>
+            <span>MEM:<span id="mem-status" style="color:var(--muted);margin-left:4px;">-</span></span>
           </div>
           <div class="charlie-conv" id="charlie-conv">
             <div class="ld">Waiting for Charlie...</div>
@@ -1112,7 +1210,8 @@
     <div id="waveform-bar">
       <div class="wf-label">VOICE</div>
       <canvas id="waveform-canvas"></canvas>
-      <button id="mic-btn" title="Click to activate mic" onclick="initMic()" style="background:none;border:1px solid var(--border2);color:var(--accent);font-family:var(--display);font-size:9px;padding:4px 8px;cursor:pointer;letter-spacing:1px;">
+      <button id="mic-btn" title="Click to activate mic" onclick="initMic()"
+        style="background:none;border:1px solid var(--border2);color:var(--accent);font-family:var(--display);font-size:9px;padding:4px 8px;cursor:pointer;letter-spacing:1px;">
         MIC
       </button>
       <div class="wf-status" id="wf-status">STANDBY</div>
@@ -1135,7 +1234,8 @@
   <div class="notes-overlay" id="notes-overlay">
     <div class="notes-hdr">
       <span>MY NOTES</span>
-      <button class="modal-close" onclick="document.getElementById('notes-overlay').classList.remove('show')">✕ CLOSE</button>
+      <button class="modal-close" onclick="document.getElementById('notes-overlay').classList.remove('show')">✕
+        CLOSE</button>
     </div>
     <div class="notes-list" id="notes-list"></div>
   </div>
@@ -1169,23 +1269,23 @@
 
     function focusPanel(id, e) {
       if (e) e.stopPropagation();
-      
+
       const targetPanel = getPanel(id);
       if (!targetPanel) return;
 
       const panels = Array.from(document.querySelectorAll('.panel'));
       const centerPanel = panels.find(p => getComputedStyle(p).gridArea.split('/')[0].trim() === 'map');
-      
+
       if (centerPanel && centerPanel !== targetPanel) {
         const targetArea = getComputedStyle(targetPanel).gridArea.split('/')[0].trim();
-        
+
         targetPanel.style.gridArea = 'map';
         centerPanel.style.gridArea = targetArea;
-        
+
         // Ensure overlay is hidden if previously open
         document.getElementById('focus-overlay').style.display = 'none';
         document.querySelectorAll('.panel.focused').forEach(p => p.classList.remove('focused'));
-        
+
         setTimeout(() => map && map.invalidateSize(), 400);
       }
     }
@@ -1233,22 +1333,22 @@
       e.preventDefault();
       const draggedEl = document.getElementById(draggedPanelId);
       const targetEl = document.getElementById(targetPanelId);
-      
+
       draggedEl.style.opacity = '1';
-      
+
       if (draggedPanelId && draggedPanelId !== targetPanelId) {
         // Swap grid-area instead of DOM positions
         const draggedArea = getComputedStyle(draggedEl).gridArea.split('/')[0].trim();
         const targetArea = getComputedStyle(targetEl).gridArea.split('/')[0].trim();
-        
+
         draggedEl.style.gridArea = targetArea;
         targetEl.style.gridArea = draggedArea;
-        
+
         setTimeout(() => map && map.invalidateSize(), 100);
       }
       draggedPanelId = null;
     }
-    
+
     // Clean up opacity if drag ends without drop
     document.addEventListener('dragend', (e) => {
       if (e.target.classList && e.target.classList.contains('panel')) {
@@ -1332,15 +1432,15 @@
       focusPanel('browser');
       const frame = document.getElementById('content-frame');
       const ph = document.getElementById('content-ph');
-      
+
       frame.style.display = 'none';
       frame.src = 'about:blank';
-      
+
       ph.innerHTML = `
         <div style="width:32px;height:32px;opacity:0.8;border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--red);font-weight:bold;">!</div>
         <p style="font-size:11px;letter-spacing:1px;text-align:center;line-height:1.8;color:var(--red);">
           RESTRICTED SITE<br>
-          <span style="color:var(--muted);font-size:9px;">${url.length > 40 ? url.slice(0,40)+'...' : url} blocks embedding.<br>Opened securely in host browser.</span>
+          <span style="color:var(--muted);font-size:9px;">${url.length > 40 ? url.slice(0, 40) + '...' : url} blocks embedding.<br>Opened securely in host browser.</span>
         </p>
       `;
       ph.style.display = 'flex';
@@ -1348,7 +1448,7 @@
       ph.style.alignItems = 'center';
       ph.style.justifyContent = 'center';
       ph.style.gap = '16px';
-      
+
       document.getElementById('browser-panel-title').textContent = "RESTRICTED";
     }
 
@@ -1362,7 +1462,7 @@
       const bg = document.getElementById('music-bg');
       const emptyState = document.getElementById('music-empty-state');
       const activeState = document.getElementById('music-active-state');
-      
+
       if (!data) {
         bg.style.display = 'none';
         activeState.style.display = 'none';
@@ -1370,7 +1470,7 @@
         _lastMusicState = false;
         return;
       }
-      
+
       // Auto-expand logic: if it transitions from not playing to playing, un-minimize the panel!
       if (data.is_playing && !_lastMusicState) {
         if (panelState['music'] === 'minimized') {
@@ -1378,10 +1478,10 @@
         }
       }
       _lastMusicState = data.is_playing;
-      
+
       emptyState.style.display = 'none';
       activeState.style.display = 'flex';
-      
+
       if (data.art_url) {
         art.src = data.art_url;
         bg.style.backgroundImage = `url('${data.art_url}')`;
@@ -1389,10 +1489,10 @@
       } else {
         bg.style.display = 'none';
       }
-      
+
       title.textContent = data.title;
       artist.textContent = data.artist;
-      
+
       if (data.is_playing) {
         status.textContent = 'PLAYING';
         status.style.color = '#1db954'; // Spotify Green
@@ -1469,7 +1569,7 @@
             className: '', iconSize: [6, 6], iconAnchor: [3, 3],
           });
           const m = L.marker([s[6], s[5]], { icon })
-            .bindPopup(`<b>${(s[1] || 'N/A').trim()}</b><br>${s[2] || '—'}<br>Alt:${s[7] || '—'}m`)
+            .bindPopup(`<b>${(s[1] || 'N/A').trim()}</b><br>${s[2] || '-'}<br>Alt:${s[7] || '-'}m`)
             .addTo(map);
           flightMarkers.push(m);
         });
@@ -1481,7 +1581,7 @@
     }
 
     // ── Markets ───────────────────────────────────────────────────────────────────
-    // Yahoo Finance is CORS-blocked in browsers — only CoinGecko (crypto) works client-side.
+    // Yahoo Finance is CORS-blocked in browsers - only CoinGecko (crypto) works client-side.
     // Indian indices / forex are shown as placeholders until a server-side proxy is added.
     async function loadMarkets() {
       try {
@@ -1494,19 +1594,19 @@
 
         // Static placeholders for indices (no browser-accessible free API for these)
         const staticItems = [
-          { label: 'NIFTY',   sym: '^NSEI',    price: '—', chg: null },
-          { label: 'SENSEX',  sym: '^BSESN',   price: '—', chg: null },
-          { label: 'USD/INR', sym: 'INR=X',    price: '—', chg: null },
-          { label: 'GOLD',    sym: 'GC=F',     price: '—', chg: null },
+          { label: 'NIFTY', sym: '^NSEI', price: '-', chg: null },
+          { label: 'SENSEX', sym: '^BSESN', price: '-', chg: null },
+          { label: 'USD/INR', sym: 'INR=X', price: '-', chg: null },
+          { label: 'GOLD', sym: 'GC=F', price: '-', chg: null },
         ];
         staticItems.forEach(i => items.push(i));
 
         // Crypto from CoinGecko (CORS-friendly)
         if (cgRes && cgRes.ok) {
           const cg = await cgRes.json().catch(() => ({}));
-          if (cg.bitcoin)  items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'),  chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
+          if (cg.bitcoin) items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
           if (cg.ethereum) items.push({ label: 'ETH/INR', sym: 'ETHINR', price: '\u20B9' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
-          if (cg.solana)   items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '\u20B9' + Math.round(cg.solana.inr).toLocaleString('en-IN'),   chg: cg.solana.inr_24h_change?.toFixed(2) });
+          if (cg.solana) items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '\u20B9' + Math.round(cg.solana.inr).toLocaleString('en-IN'), chg: cg.solana.inr_24h_change?.toFixed(2) });
         }
 
         const html = items.map(i => {
@@ -1541,7 +1641,7 @@
         const tv = `https://www.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=D&theme=dark&style=1&locale=en&toolbar_bg=%23040810`;
         document.getElementById('graph-frame').src = tv;
       }
-      document.getElementById('modal-title').textContent = `${label} — CHART`;
+      document.getElementById('modal-title').textContent = `${label} - CHART`;
       document.getElementById('graph-modal').classList.add('open');
     }
 
@@ -1627,7 +1727,7 @@
         <div class="news-headline">${item.title}</div>
         <div class="news-meta"><span>${item.source}</span><span>${ts}</span></div>
       </a>`;
-        }).join('') || '<div class="er">No articles loaded — corsproxy may be rate limiting</div>';
+        }).join('') || '<div class="er">No articles loaded - corsproxy may be rate limiting</div>';
         feed.innerHTML = html;
         newsCache[tab] = { html, ts: Date.now() };
       } catch (e) { feed.innerHTML = `<div class="er">Error: ${e.message}</div>`; }
@@ -1641,11 +1741,11 @@
     let charlieSpeaking = false;  // set by WebSocket
 
     let audioCtx = null;
-    
+
     function getAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser(); 
+        analyser = audioCtx.createAnalyser();
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
       }
@@ -1656,26 +1756,27 @@
       try {
         const ac = getAudioContext();
         if (ac.state === 'suspended') await ac.resume();
-        
+
         const binaryString = window.atob(base64Data);
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
         for (let i = 0; i < len; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        
+
         const audioBuffer = await ac.decodeAudioData(bytes.buffer);
         const source = ac.createBufferSource();
+        window.currentAudioSource = source;
         source.buffer = audioBuffer;
-        
+
         source.connect(analyser); // For visualization
         source.connect(ac.destination); // For hearing it
-        
+
         source.start(0);
         charlieSpeaking = true;
         document.getElementById('wf-status').textContent = 'SPEAKING';
         document.getElementById('wf-status').className = 'wf-status';
-        
+
         source.onended = () => {
           charlieSpeaking = false;
           document.getElementById('wf-status').textContent = 'STANDBY';
@@ -1708,19 +1809,19 @@
         for (let i = 0; i < bars; i++) {
           const x = startX + i * (barWidth + gap);
           let val = 0.05;
-          
+
           if (charlieListening) {
-             val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
+            val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
           }
 
           const barH = val * (H * 0.7);
           const hue = charlieSpeaking ? 140 + val * 40 : 185; // Green to Cyan
           const alpha = charlieSpeaking ? 0.5 + val * 0.5 : (charlieListening ? 0.3 : 0.15);
-          
+
           ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
           ctx2d.shadowBlur = charlieSpeaking && val > 0.4 ? 10 : 0;
           ctx2d.shadowColor = `hsla(${hue},100%,60%,1)`;
-          
+
           ctx2d.beginPath();
           ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
           ctx2d.fill();
@@ -1737,20 +1838,20 @@
       for (let i = 0; i < bars; i++) {
         const x = startX + i * (barWidth + gap);
         // sample lower frequencies more (speech range)
-        const dataIdx = Math.floor((i / bars) * (dataArray.length * 0.6)); 
+        const dataIdx = Math.floor((i / bars) * (dataArray.length * 0.6));
         const rawVal = dataArray[dataIdx] / 255;
         const val = rawVal * rawVal; // sharp spikes
-        
-        const barH = val * (H * 0.8) + 2; 
-        
+
+        const barH = val * (H * 0.8) + 2;
+
         // Use green for Charlie, cyan for user mic
         const hue = charlieSpeaking ? 140 + val * 40 : 185 + val * 60;
         const alpha = charlieSpeaking ? 0.6 + val * 0.4 : 0.3 + val * 0.7;
-        
+
         ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
         ctx2d.shadowBlur = (showActive && val > 0.3) ? 10 : 0;
         ctx2d.shadowColor = charlieSpeaking ? `hsla(${hue},100%,60%,1)` : '#00d4ff';
-        
+
         ctx2d.beginPath();
         ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
         ctx2d.fill();
@@ -1787,6 +1888,16 @@
           else if (d.type === 'audio') {
             playCharlieAudio(d.data);
           }
+          else if (d.type === 'stop_audio') {
+            if (window.currentAudioSource) {
+              window.currentAudioSource.stop();
+              window.currentAudioSource = null;
+            }
+          }
+          else if (d.type === 'set_theme') {
+            document.body.className = d.theme === 'default' ? '' : 'theme-' + d.theme;
+            addMsg('system', 'Theme changed to ' + d.theme);
+          }
           else if (d.type === 'heard') {
             addMsg('user', d.text);
             handleVoiceCommand(d.text);
@@ -1819,6 +1930,9 @@
           else if (d.type === 'reset_panels') { resetPanels(); }
           else if (d.type === 'focus_panel') { focusPanel(d.panel); }
           else if (d.type === 'memory') { updateMemory(d.facts); }
+          else if (d.type === 'interview_mode') {
+            document.getElementById('interview-badge').style.display = d.active ? 'flex' : 'none';
+          }
           else if (d.type === 'timer_start') { startTimer(d.seconds, d.label); }
           else if (d.type === 'timer_cancel') { cancelTimer(); }
           else if (d.type === 'weather_card') { showWeatherCard(d); }
@@ -1866,8 +1980,8 @@
       pendingSend = true;
       setTimeout(() => pendingSend = false, 300);
 
-      addMsg('user', text);
-      handleVoiceCommand(text);
+      // Don't add message here! Python backend will broadcast a 'heard' event
+      // which adds it to screen. Adding here too causes the DOUBLE MESSAGE bug.
       if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'text_input', text }));
       input.value = '';
     }
@@ -1892,7 +2006,7 @@
 
     // ── Timer ─────────────────────────────────────────────────────────────────────
     let timerInterval = null;
-    let timerEndTime  = null;
+    let timerEndTime = null;
 
     function startTimer(seconds, label) {
       if (timerInterval) clearInterval(timerInterval);

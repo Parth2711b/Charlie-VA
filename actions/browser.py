@@ -1,5 +1,5 @@
 """
-actions/browser.py — Open websites and perform basic browser actions via Playwright.
+actions/browser.py - Open websites and perform basic browser actions via Playwright.
 
 Install: pip install playwright && python -m playwright install chromium
 """
@@ -57,7 +57,7 @@ class BrowserAction:
     async def handle(self, text: str) -> str:
         text_lower = text.lower()
         
-        # YouTube search — send to dashboard instead of opening externally
+        # YouTube search - send to dashboard instead of opening externally
         yt_match = re.search(
             r"(?:play|search|find)\s+(.+?)\s+(?:on\s+)?youtube", text_lower
         )

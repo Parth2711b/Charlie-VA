@@ -1,6 +1,6 @@
 """
-handlers/calculator.py — Evaluate simple math expressions offline.
-No LLM needed — pure Python eval in a sandboxed context.
+handlers/calculator.py - Evaluate simple math expressions offline.
+No LLM needed - pure Python eval in a sandboxed context.
 """
 
 import re
@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger("Charlie.handler.calculator")
 
-# Safe math namespace — no builtins that could be dangerous
+# Safe math namespace - no builtins that could be dangerous
 SAFE_MATH = {k: getattr(math, k) for k in dir(math) if not k.startswith("_")}
 SAFE_MATH.update({"abs": abs, "round": round, "min": min, "max": max})
 

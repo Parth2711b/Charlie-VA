@@ -1,5 +1,5 @@
 """
-actions/system.py — System-level actions: volume, apps, clipboard.
+actions/system.py - System-level actions: volume, apps, clipboard.
 Windows-focused (since Parth's machine is Windows 11).
 """
 

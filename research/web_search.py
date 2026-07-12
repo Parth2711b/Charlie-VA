@@ -1,5 +1,5 @@
 """
-research/web_search.py — Free web search via DuckDuckGo (no API key needed).
+research/web_search.py - Free web search via DuckDuckGo (no API key needed).
 Falls back to empty string if offline or rate-limited.
 """
 
@@ -20,7 +20,7 @@ class WebSearch:
         logger.info("Searching: %s", query)
 
         try:
-            # DDGS is sync — run in executor to not block async loop
+            # DDGS is sync - run in executor to not block async loop
             loop = asyncio.get_event_loop()
             results = await asyncio.wait_for(
                 loop.run_in_executor(None, self._sync_search, query),

@@ -1,5 +1,5 @@
 """
-handlers/timer.py — Set countdown timers displayed on the dashboard.
+handlers/timer.py - Set countdown timers displayed on the dashboard.
 Sends timer_start to dashboard, which handles the visual countdown.
 """
 
