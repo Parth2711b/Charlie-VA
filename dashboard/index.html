@@ -1532,52 +1532,43 @@
       }
     }
 
-    // ── Weather city markers ──────────────────────────────────────────────────────
-    const CITIES = [
-      { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
-      { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
-      { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
-      { name: 'Pune', lat: 18.5204, lon: 73.8567 },
-      { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
-      { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
-      { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
-      { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
-      { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
-      { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
-    ];
+    // ── Earthquakes ───────────────────────────────────────────────────────────────
+    const eqMarkers = [];
 
-    const wxMarkers = [];
-
-    async function loadWeather() {
-      wxMarkers.forEach(m => map.removeLayer(m)); wxMarkers.length = 0;
+    async function loadEarthquakes() {
+      eqMarkers.forEach(m => map.removeLayer(m)); eqMarkers.length = 0;
       try {
-        const results = await Promise.all(CITIES.map(async c => {
-          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,windspeed_10m`);
-          const d = await r.json();
-          return { ...c, temp: Math.round(d.current.temperature_2m), wind: Math.round(d.current.windspeed_10m) };
-        }));
-
-        results.forEach(c => {
-          const col = tempColor(c.temp);
+        const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
+        const data = await res.json();
+        const features = data.features || [];
+        
+        features.forEach(f => {
+          const coords = f.geometry.coordinates;
+          const mag = f.properties.mag;
+          if (mag == null) return;
+          
+          // Scale size by magnitude
+          const radius = Math.max(8, mag * 6);
+          const col = '#ff3344';
+          
           const icon = L.divIcon({
-            html: `<div style="background:${col};border:1px solid rgba(255,255,255,0.4);border-radius:3px;padding:1px 5px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#040810;font-weight:700;white-space:nowrap;box-shadow:0 0 10px ${col}88;">${c.temp}°</div>`,
-            className: '', iconAnchor: [20, 10],
+            html: `<div style="width:${radius}px;height:${radius}px;background:rgba(255,51,68,0.5);border:1px solid ${col};border-radius:50%;box-shadow:0 0 10px ${col};"></div>`,
+            className: '', iconAnchor: [radius/2, radius/2],
           });
-          const m = L.marker([c.lat, c.lon], { icon })
-            .bindPopup(`<b style="color:#00d4ff;">${c.name}</b><br>${c.temp}°C | ${c.wind} km/h`)
+          const m = L.marker([coords[1], coords[0]], { icon })
+            .bindPopup(`<b style="color:${col};">M ${mag.toFixed(1)} Earthquake</b><br>${f.properties.place}`)
             .addTo(map);
-          wxMarkers.push(m);
+          eqMarkers.push(m);
         });
 
-        document.getElementById('city-count').textContent = `${results.length} CITIES`;
-        document.getElementById('weather-cities').innerHTML = results.map(c =>
+        document.getElementById('city-count').textContent = `${features.length} QUAKES (1H)`;
+        document.getElementById('weather-cities').innerHTML = features.slice(0, 10).map(f =>
           `<div class="wx-city">
-        <div class="wx-city-name">${c.name.substring(0, 3).toUpperCase()}</div>
-        <div class="wx-city-temp" style="color:${tempColor(c.temp)};">${c.temp > 0 ? '+' : ''}${c.temp}°</div>
-        <div class="wx-city-wind">${c.wind}km/h</div>
+        <div class="wx-city-name" style="width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.properties.place.toUpperCase()}</div>
+        <div class="wx-city-temp" style="color:#ff3344;width:auto;">M ${f.properties.mag.toFixed(1)}</div>
       </div>`
         ).join('');
-      } catch (e) { console.error('Weather error:', e); }
+      } catch (e) { console.error('Earthquake error:', e); }
     }
 
     // ── Flights ───────────────────────────────────────────────────────────────────
@@ -1602,7 +1593,7 @@
           flightMarkers.push(m);
         });
         document.getElementById('flight-count').textContent = `${states.length} FLIGHTS`;
-        document.getElementById('asset-count').textContent = `${states.length + wxMarkers.length} ACTIVE`;
+        document.getElementById('asset-count').textContent = `${states.length + eqMarkers.length} ACTIVE`;
       } catch (e) {
         document.getElementById('flight-count').textContent = 'OPENSKY N/A';
       }
@@ -2122,11 +2113,11 @@
 
     // ── Boot ──────────────────────────────────────────────────────────────────────
     async function boot() {
-      await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
+      await Promise.all([loadMarkets(), loadEarthquakes(), loadNews('india')]);
       loadFlights();
     }
     boot();
-    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadEarthquakes(); loadNews(currentTab); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>
