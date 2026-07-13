@@ -23,7 +23,11 @@ from config import OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_ANSWER_MODEL, MAX_CONTE
 logger = logging.getLogger("Charlie.local_llm")
 
 SYSTEM_PROMPT = (
-    "You are Charlie, a personal AI voice assistant. "
+    "Your name is Charlie. You are a personal AI voice assistant created by Parth Bansal. "
+    "The person speaking to you right now is your creator, Parth. Address him as Parth. "
+    "If the user asks 'Who am I?', you MUST respond that they are Parth. "
+    "You are capable of seeing the screen, reading the camera, searching the web, checking live weather/flights, "
+    "setting timers, taking notes, playing music via Spotify, and conducting mock interviews. "
     "Be concise - your responses will be spoken aloud. Keep them short and conversational. "
     "No markdown, no bullet points, no asterisks. "
     "If you don't know something, say so honestly."
@@ -65,15 +69,25 @@ class LocalLLM:
         _verify_ollama_once()
         logger.info("LLM ready: %s", self.model)
 
-    async def chat(self, user_input: str, context: list) -> str:
+    async def chat(self, user_input: str, context: list, relevant_facts: list[str] | None = None) -> str:
         """General conversation with context."""
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        sys_prompt = SYSTEM_PROMPT
+        if relevant_facts:
+            facts_str = "\n- ".join(relevant_facts)
+            sys_prompt += f"\n\nHere are some relevant memory facts you have learned about the user:\n- {facts_str}"
+            
+        messages = [{"role": "system", "content": sys_prompt}]
         messages += context[-MAX_CONTEXT_TURNS * 2:]
         messages.append({"role": "user", "content": user_input})
         return await self._call(messages)
 
-    async def answer_with_context(self, question: str, search_results: str, context: list) -> str:
+    async def answer_with_context(self, question: str, search_results: str, context: list, relevant_facts: list[str] | None = None) -> str:
         """Answer a question using web search results as context."""
+        sys_prompt = SYSTEM_PROMPT
+        if relevant_facts:
+            facts_str = "\n- ".join(relevant_facts)
+            sys_prompt += f"\n\nHere are some relevant memory facts you have learned about the user:\n- {facts_str}"
+            
         prompt = (
             f"Use the following search results to answer the question.\n\n"
             f"Search Results:\n{search_results}\n\n"
@@ -81,7 +95,7 @@ class LocalLLM:
             f"Give a concise spoken answer. No bullet points, no markdown."
         )
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": sys_prompt},
             {"role": "user",   "content": prompt}
         ]
         return await self._call(messages)
@@ -117,15 +131,7 @@ class LocalLLM:
 # Before: get_router_llm() created a NEW LocalLLM every time it was called.
 # Now: creates once, returns the cached instance forever.
 
-_router_llm = None
 _answer_llm = None
-
-def get_router_llm() -> LocalLLM:
-    """Tiny 1.5b model - only used for single-token routing decisions."""
-    global _router_llm
-    if _router_llm is None:
-        _router_llm = LocalLLM(model=OLLAMA_MODEL)
-    return _router_llm
 
 
 def get_answer_llm() -> LocalLLM:

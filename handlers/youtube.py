@@ -82,5 +82,5 @@ async def handle(text: str) -> str:
     else:
         import webbrowser
         webbrowser.open(f"https://www.youtube.com/results?search_query={quote_plus(query)}")
-        logger.warning("YouTube scrape failed for '%s' - opened in browser", query)
-        return f"Couldn't embed '{query}' - opened YouTube search in your browser instead."
+        logger.warning("YouTube scrape failed for '%s' - opened search in browser", query)
+        return f"Couldn't find '{query}' - opened YouTube search in your browser instead."

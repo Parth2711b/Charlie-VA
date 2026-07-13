@@ -28,14 +28,14 @@ CHUNK          = 1024
 
 # ── Silence Detection ─────────────────────────────────────────────────────────
 SILENCE_THRESHOLD  = 600   # RMS amplitude below this = silence
-SILENCE_DURATION   = 1.5   # seconds of continuous silence to stop early
+SILENCE_DURATION   = 2.5   # seconds of continuous silence to stop early
 MIN_SPEECH_CHUNKS  = 5     # must detect this many loud chunks before accepting
 
 # ── Transcription Quality ─────────────────────────────────────────────────────
 MIN_TEXT_LENGTH    = 3     # discard transcriptions shorter than this
 HALLUCINATION_PHRASES = [  # known Whisper hallucinations on silence
     "thank you", "thanks for watching", "bye", "goodbye",
-    "subscribe", "see you", "you"
+    "subscribe", "see you", "you", "yes", "yes."
 ]
 
 

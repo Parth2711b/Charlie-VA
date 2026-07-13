@@ -11,7 +11,7 @@ faster-whisper>=1.0.0
 pyaudio>=0.2.14
 
 # ── Speech: Wake Word ─────────────────────────────────────────────────────────
-openwakeword>=0.6.0
+vosk>=0.3.45
 
 # ── Speech: TTS (Piper is a binary - install separately, see README)
 # pyttsx3 is the Windows fallback only

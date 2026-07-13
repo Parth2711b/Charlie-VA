@@ -20,8 +20,6 @@ CLOUD_MODEL        = os.getenv("CLOUD_MODEL", "claude-sonnet-4-6")
 # ── Speech ────────────────────────────────────────────────────────────────────
 WHISPER_MODEL      = os.getenv("WHISPER_MODEL", "base")        # base = good CPU balance
 WHISPER_LANGUAGE   = os.getenv("WHISPER_LANGUAGE", "en")
-WAKE_WORD_MODEL    = os.getenv("WAKE_WORD_MODEL", "hey_jarvis") # OpenWakeWord model name
-
 TTS_VOICE          = os.getenv("TTS_VOICE", "en_US-lessac-high")  # Piper voice
 TTS_SPEED          = float(os.getenv("TTS_SPEED", "1.0"))
 
@@ -39,7 +37,7 @@ CAMERA_INDEX       = int(os.getenv("CAMERA_INDEX", "0"))
 
 # ── Memory ────────────────────────────────────────────────────────────────────
 MEMORY_DB_PATH     = os.getenv("MEMORY_DB_PATH", "data/memory.db")
-MAX_CONTEXT_TURNS  = int(os.getenv("MAX_CONTEXT_TURNS", "10"))
+MAX_CONTEXT_TURNS  = int(os.getenv("MAX_CONTEXT_TURNS", "5"))
 
 # ── Network ───────────────────────────────────────────────────────────────────
 def is_online() -> bool:

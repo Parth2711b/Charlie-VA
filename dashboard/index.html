@@ -104,6 +104,21 @@
       z-index: 9999;
     }
 
+    /* Global Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--accent);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--cyan);
+    }
+
     /* Header */
     #header {
       height: 44px;
@@ -777,6 +792,17 @@
       overflow-y: auto;
     }
 
+    .memory-facts::-webkit-scrollbar {
+      width: 4px;
+    }
+    .memory-facts::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .memory-facts::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
     .memory-fact {
       font-size: 10px;
       color: var(--text2);
@@ -1166,8 +1192,7 @@
               </p>
             </div>
             <iframe id="content-frame" style="display:none;width:100%;height:100%;border:none;color-scheme:dark;"
-              allowfullscreen allow="autoplay"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"></iframe>
+              allowfullscreen allow="autoplay; encrypted-media"></iframe>
           </div>
         </div>
       </div>
@@ -1192,7 +1217,10 @@
             <div class="ld">Waiting for Charlie...</div>
           </div>
           <div class="memory-section">
-            <div class="memory-title">MEMORY</div>
+            <div class="memory-title" style="display:flex; justify-content:space-between; align-items:center;">
+              MEMORY
+              <button onclick="clearMemory()" style="background:var(--accent); color:var(--bg); border:none; border-radius:2px; font-size:8px; font-family:var(--display); cursor:pointer; padding:2px 6px; text-transform:uppercase;">Clear</button>
+            </div>
             <div class="memory-facts" id="memory-facts">
               <div class="memory-fact">No facts yet</div>
             </div>
@@ -1558,7 +1586,7 @@
     async function loadFlights() {
       try {
         const url = encodeURIComponent('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=37&lomax=97');
-        const res = await fetch('https://api.allorigins.win/raw?url=' + url);
+        const res = await fetch('https://corsproxy.io/?url=' + url);
         if (!res.ok) throw new Error('rate limited');
         const data = await res.json();
         const states = (data.states || []).filter(s => s[5] && s[6]).slice(0, 100);
@@ -1867,7 +1895,7 @@
 
     function connectWS() {
       try {
-        ws = new WebSocket('ws://localhost:8765');
+        ws = new WebSocket(`ws://${window.location.hostname}:8765`);
         ws.onopen = () => {
           wsRetry = 0;
           setCharlieStatus('online', 'CHARLIE ONLINE');
@@ -1986,8 +2014,17 @@
       input.value = '';
     }
 
+    function clearMemory() {
+      if(ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'text_input', text: 'clear memory'}));
+      }
+    }
+
     function updateMemory(facts) {
-      if (!facts || !facts.length) return;
+      if (!facts || !facts.length) {
+        document.getElementById('memory-facts').innerHTML = '<div class="memory-fact">No facts yet</div>';
+        return;
+      }
       document.getElementById('memory-facts').innerHTML = facts.map(f => `<div class="memory-fact">${f}</div>`).join('');
     }
 

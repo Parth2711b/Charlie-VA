@@ -28,9 +28,10 @@ class ScreenCapture:
             # ── Capture screen ─────────────────────────────────────────────
             screenshot = ImageGrab.grab()
 
-            # ── Encode to base64 IN MEMORY (no temp file!) ─────────────────
+            # Resize to max 1024x1024 to preserve text readability while keeping payload small
+            screenshot.thumbnail((1024, 1024))
             buffer = io.BytesIO()
-            screenshot.save(buffer, format="PNG")
+            screenshot.save(buffer, format="JPEG", quality=75)
             img_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
             # ── Dynamic Prompting ──────────────────────────────────────────
@@ -46,9 +47,9 @@ class ScreenCapture:
                 )
             else:
                 prompt = (
-                    "Describe what is on this screen in 2-3 short sentences. "
+                    "Describe what is on this screen in a single, short sentence. "
                     "Focus on what the user is doing or what app is open. "
-                    "Be specific and concise - this will be spoken aloud."
+                    "Be specific and extremely concise."
                 )
 
             # ── Send to LLaVA (ASYNC — doesn't freeze event loop) ──────────
@@ -60,7 +61,8 @@ class ScreenCapture:
                         "prompt": prompt,
                         "images": [img_b64],
                         "stream": False,
-                        "options": {"temperature": 0.2, "num_predict": 150},
+                        "keep_alive": "30m",  # VERY IMPORTANT: Prevents slow disk loading every time!
+                        "options": {"num_predict": 50, "temperature": 0.2}
                     },
                 )
 

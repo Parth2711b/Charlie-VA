@@ -45,10 +45,11 @@ class Assistant:
             
         if self.ws.has_clients():
             logger.info("Streaming audio to dashboard clients...")
-            b64_audio = self.tts.generate_audio_base64(text)
+            loop = asyncio.get_event_loop()
+            b64_audio, duration = await loop.run_in_executor(None, self.tts.generate_audio_base64, text)
             if b64_audio:
                 await self.ws.send_audio(b64_audio)
-                return len(text) / 15.0  # Estimate: ~15 chars per sec for TTS
+                return duration
             else:
                 return self.tts.speak(text)
         else:
@@ -73,13 +74,16 @@ class Assistant:
                 # ── 1. Wait for wake word ──────────────────────────────────
                 if not self.barge_in_triggered:
                     logger.info("Waiting for wake word... say 'charlie'")
-                    await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+                    detected = await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+                    if not detected:
+                        continue
                 else:
                     logger.info("Barge-in triggered, skipping wake word wait.")
                     self.barge_in_triggered = False
 
                 # ── 2. Record + transcribe ────────────────────────────────
                 await self._speak("Yes?")
+                await asyncio.sleep(0.2)  # Let the room echo die down
                 audio_path = await loop.run_in_executor(None, self.stt.record_audio)
                 text = self.stt.transcribe(audio_path)
 
@@ -99,9 +103,9 @@ class Assistant:
 
     async def _handle_text_input(self, text: str):
         """Handle text input from dashboard - same pipeline as voice."""
-        await self._process(text)
+        await self._process(text, is_text_input=True)
 
-    async def _process(self, text: str):
+    async def _process(self, text: str, is_text_input: bool = False):
         """Core pipeline: text → intent → response → speak + dashboard update."""
         if self.is_processing:
             logger.warning("Already processing a query. Ignoring: %s", text)
@@ -109,11 +113,11 @@ class Assistant:
             
         self.is_processing = True
         try:
-            await self._process_inner(text)
+            await self._process_inner(text, is_text_input)
         finally:
             self.is_processing = False
 
-    async def _process_inner(self, text: str):
+    async def _process_inner(self, text: str, is_text_input: bool):
         logger.info("Heard: %s", text)
         await self.ws.send_heard(text)
 
@@ -122,13 +126,8 @@ class Assistant:
 
         # ── RAG Context Injection (New) ───────────────────────────────────
         relevant_facts = self.memory.search_facts(text)
-        if relevant_facts:
-            facts_str = "\n- ".join(relevant_facts)
-            # We secretly insert these facts into the context so the LLM reads them
-            context.append({
-                "role": "system", 
-                "content": f"Relevant background facts about the user:\n- {facts_str}"
-            })
+        
+        # We will pass relevant_facts to the router so it can be cleanly injected into the LLM's primary system prompt.
 
         # ── Route intent → get response ───────────────────────────────────
         if self.is_interviewing:
@@ -140,7 +139,7 @@ class Assistant:
             else:
                 response = await self.interviewer.chat(text)
         else:
-            response = await self.router.route(text, context)
+            response = await self.router.route(text, context, relevant_facts)
             if response == "__START_INTERVIEW__":
                 self.is_interviewing = True
                 await self.ws.send_interview_mode(True)
@@ -156,6 +155,10 @@ class Assistant:
         # ── Save to memory ────────────────────────────────────────────────
         self.memory.add_turn(user=text, assistant=response)
 
+        # ── Background Memory Extractor ───────────────────────────────────
+        from core.memory_extractor import extract_facts_background
+        asyncio.create_task(extract_facts_background(text, self.memory))
+
         # ── Send to dashboard ─────────────────────────────────────────────
         await self.ws.send_response(response)
 
@@ -167,9 +170,14 @@ class Assistant:
         # ── Speak response ────────────────────────────────────────────────────
         logger.info("Responding: %s", response)
         
+        # We don't pass is_text_input to _speak since it doesn't need it.
         duration = await self._speak(response)
         
-        if duration > 0:
+        # Disable barge-in if it's text input (user doesn't expect mic to turn on)
+        # Or if the AI says its own name, which will cause it to hear itself and trigger barge-in!
+        should_barge_in = (not is_text_input) and ("charlie" not in response.lower())
+        
+        if duration > 0 and should_barge_in:
             logger.info("Listening for barge-in for %.1fs...", duration)
             loop = asyncio.get_event_loop()
             listen_task = loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
@@ -183,8 +191,14 @@ class Assistant:
                 self.barge_in_triggered = True
             except asyncio.TimeoutError:
                 # Finished speaking naturally, no barge-in.
-                # IMPORTANT: Cancel the orphaned listener so its audio stream closes!
-                listen_task.cancel()
-                pass
+                # IMPORTANT: Gracefully stop the thread to prevent dangling audio streams!
+                self.wake_word.stop_listening()
+                try:
+                    await listen_task
+                except (Exception, asyncio.CancelledError):
+                    pass
+        elif duration > 0:
+            # Just wait for it to finish speaking naturally
+            await asyncio.sleep(duration)
 
         await asyncio.sleep(0.5)

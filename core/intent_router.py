@@ -26,7 +26,7 @@ SHUTDOWN_WORDS = [
 # Each entry: (intent_name, list_of_keyword_substrings)
 # Checked in order - first match wins.
 INTENT_PATTERNS: list[tuple[str, list[str]]] = [
-    ("youtube",    ["youtube", "search youtube", "find on youtube"]),
+    ("youtube",    ["youtube", "search youtube", "find on youtube", "play on youtube", "play video on youtube"]),
     ("arxiv",      ["search arxiv", "find papers on", "latest research on", "research about", "papers about", "papers on"]),
     ("interview",  ["start a mock interview", "interview me", "practice for my interview", "mock interview", "coding interview", "practice coding"]),
     ("debug",      ["why did it crash", "read the traceback", "explain this error", "what went wrong", "debug this"]),
@@ -34,6 +34,7 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
     ("weather",    ["weather", "temperature", "forecast", "how hot", "how cold", "what's the temp"]),
     ("timer",      ["set a timer", "set timer", "timer for", "start a timer", "cancel timer", "stop timer", "remind me in"]),
     ("notes",      ["save a note", "take a note", "make a note", "note that", "write down", "show my notes", "read notes", "clear notes", "my notes"]),
+    ("clear_memory", ["clear memory", "forget everything", "delete memory", "reset memory"]),
     ("whatsapp",   ["whatsapp", "send message", "message to", "text to", "send a message"]),
     ("calculator", ["calculator", "calculate", "compute", "how much is", "times", "plus", "minus", "divided by", "square root"]),
 
@@ -46,8 +47,7 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
     ("dashboard",  ["show me the map", "global map", "focus news", "focus map",
                     "focus charlie", "show news", "reset panels", "show dashboard", "focus on", "open the map", "open map", "change theme", "hacker theme", "jarvis theme", "cyberpunk theme", "switch theme"]),
     ("music",      ["play music", "play a song", "pause", "resume", "skip", "next track", "pause music", "resume music", "play song", "play artist"]),
-    ("browser",    ["open ", "go to ", "visit ", "browse ", "load "]),
-    ("knowledge",  ["who is", "what is", "where is", "when did", "why is", "how to", "capital of", "history of", "explain", "tell me about", "who made you", "your name"])
+    ("browser",    ["open ", "go to ", "visit ", "browse ", "load "])
 ]
 
 # ── Live-data keywords - needs web search ─────────────────────────────────────
@@ -57,6 +57,9 @@ LIVE_DATA_KEYWORDS = [
     "weather in",  # handled by weather handler, but just in case
     "2024", "2025", "2026",
     "who won", "what happened",
+    # Add general knowledge triggers to force web search instead of hallucinating facts
+    "who is", "who was", "what is", "what are", "when was", "where is", "how many",
+    "founded", "history", "capital", "population"
 ]
 
 # ── Pure-offline keywords - never needs search ────────────────────────────────
@@ -98,15 +101,14 @@ def _needs_live_data(text: str) -> bool:
 class IntentRouter:
     def __init__(self, memory=None):
         self.memory = memory
-        from llm.local_llm import get_router_llm, get_answer_llm
+        from llm.local_llm import get_answer_llm
         from research.web_search import WebSearch
         from actions.whatsapp import WhatsAppAction
         from actions.system import SystemAction
         from vision.screen_capture import ScreenCapture
         from vision.camera import Camera
 
-        # Two models: tiny for routing, bigger for answers
-        self.router_llm = get_router_llm()
+        # Answer model
         self.answer_llm = get_answer_llm()
 
         # Cloud LLM (optional)
@@ -181,10 +183,58 @@ class IntentRouter:
             
         return None
 
-    async def route(self, text: str, context: list) -> str:
+    async def route(self, text: str, context: list, relevant_facts: list[str] | None = None) -> str:
         # ── 1. Shutdown ────────────────────────────────────────────────────────
         if _is_shutdown(text):
             return "__SHUTDOWN__"
+
+        # ── 1.5. Multi-intent Splitting ─────────────────────────────────────────
+        import re
+        # Split by common conjunctions if they have spaces around them
+        parts = [p.strip() for p in re.split(r'\b(?:and|then|also)\b', text, flags=re.IGNORECASE) if len(p.strip()) > 2]
+        
+        # If it's a compound sentence, check if it contains intents
+        if len(parts) > 1:
+            part_intents = []
+            has_intent = False
+            for part in parts:
+                intent = self._semantic_match(part)
+                part_intents.append((part, intent))
+                if intent:
+                    has_intent = True
+            
+            if has_intent:
+                responses = []
+                llm_parts = []
+                for part, intent in part_intents:
+                    if intent:
+                        try:
+                            resp = await self._dispatch(intent, part, context)
+                            if resp:
+                                responses.append(resp)
+                        except Exception as e:
+                            logger.error("Handler error for '%s': %s", intent, e)
+                    else:
+                        llm_parts.append(part)
+                
+                # If there are leftovers for the LLM
+                if llm_parts:
+                    leftover_text = " and ".join(llm_parts)
+                    online = is_online()
+                    if online and _needs_live_data(leftover_text):
+                        try:
+                            results = await self.web_search.search(leftover_text)
+                            llm = self.cloud_llm or self.answer_llm
+                            resp = await llm.answer_with_context(leftover_text, results, context, relevant_facts)
+                            responses.append(resp)
+                        except Exception:
+                            resp = await self.answer_llm.chat(leftover_text, context, relevant_facts)
+                            responses.append(resp)
+                    else:
+                        resp = await self.answer_llm.chat(leftover_text, context, relevant_facts)
+                        responses.append(resp)
+                        
+                return " ".join(responses)
 
         # ── 2. Semantic Intent Dispatch (Fast vector math, no LLM) ─────────────
         intent = self._semantic_match(text)
@@ -204,13 +254,13 @@ class IntentRouter:
             try:
                 results = await self.web_search.search(text)
                 llm = self.cloud_llm or self.answer_llm
-                return await llm.answer_with_context(text, results, context)
+                return await llm.answer_with_context(text, results, context, relevant_facts)
             except Exception as e:
                 logger.error("Search failed, falling back to LLM: %s", e)
 
         # ── 4. Pure LLM answer (offline-safe) ─────────────────────────────────
         logger.info("Direct LLM answer: %s", text[:50])
-        return await self.answer_llm.chat(text, context)
+        return await self.answer_llm.chat(text, context, relevant_facts)
 
     async def _dispatch(self, intent: str, text: str, context: list) -> str:
         """Route an identified intent to the correct handler."""
@@ -244,6 +294,15 @@ class IntentRouter:
         elif intent == "notes":
             from handlers.notes import handle
             return await handle(text)
+
+        elif intent == "clear_memory":
+            if self.memory:
+                self.memory.clear_all_facts()
+                self.memory.clear_context()
+                from core import websocket_bridge as ws
+                await ws.broadcast({"type": "memory", "facts": []})
+                return "I have wiped my memory banks."
+            return "Memory is not active."
 
         elif intent == "whatsapp":
             return await self.whatsapp.handle(text)
@@ -363,4 +422,4 @@ class IntentRouter:
             else:
                 return "I have Hacker, Jarvis, Cyberpunk, and Ember themes available. Which one would you like?"
 
-        return "Done."
+        return "I'm not sure how to adjust the dashboard for that."

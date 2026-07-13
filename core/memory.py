@@ -113,3 +113,18 @@ class Memory:
         self.conn.commit()
         logger.info("Conversation history cleared.")
 
+    def clear_all_facts(self):
+        """Wipe all long-term facts from memory."""
+        self.conn.execute("DELETE FROM facts")
+        self.conn.commit()
+        
+        try:
+            # Drop the whole collection and recreate to clear chroma
+            self.chroma_client.delete_collection(name="facts")
+            self.collection = self.chroma_client.create_collection(name="facts")
+            logger.info("ChromaDB facts collection cleared and recreated.")
+        except Exception as e:
+            logger.error("Failed to clear ChromaDB: %s", e)
+            
+        logger.info("All long-term memory facts cleared.")
+
