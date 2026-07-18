@@ -145,6 +145,15 @@
       filter: grayscale(100%) invert(100%) contrast(1.4) brightness(0.7);
     }
 
+    .route-line {
+      filter: drop-shadow(0 0 8px var(--accent));
+      animation: dash-flow 1s linear infinite;
+    }
+    
+    @keyframes dash-flow {
+      to { stroke-dashoffset: -20; }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -1868,8 +1877,22 @@
       if (/stop.*(youtube|video)|close.*(youtube|video)/.test(t)) { stopVideo(); return; }
       if (/show.*news|focus.*news/.test(t)) { focusPanel('news'); switchNewsTab('india'); return; }
       if (/open.*map|show.*map/.test(t)) { focusPanel('map'); return; }
+      
       const urlMatch = text.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) { loadUrl(urlMatch[0], 'url'); }
+      if (urlMatch) { 
+        const url = urlMatch[0];
+        if (url.includes('google.com/maps/dir/')) {
+           const parts = url.split('dir/')[1].split('/');
+           if (parts.length >= 2) {
+             const origin = decodeURIComponent(parts[0].replace(/\+/g, ' '));
+             const destination = decodeURIComponent(parts[1].replace(/\+/g, ' '));
+             drawRouteOnMap(origin, destination);
+             focusPanel('map');
+             return;
+           }
+        }
+        loadUrl(url, 'url'); 
+      }
     }
 
     // ── Map ───────────────────────────────────────────────────────────────────────
@@ -2859,6 +2882,52 @@
       clearTimeout(hoverTimeout);
       hoverTooltip.style.display = 'none';
     });
+
+    // ── Routing ───────────────────────────────────────────────────────────────────
+    let currentRouteLayer = null;
+    let currentRouteMarkers = [];
+
+    async function geocode(query) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+        const data = await res.json();
+        if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+      } catch (e) { console.error('Geocode error', e); }
+      return null;
+    }
+
+    async function drawRouteOnMap(originStr, destStr) {
+      const statusEl = document.getElementById('stt-status');
+      statusEl.textContent = 'ROUTING...';
+      const [origin, dest] = await Promise.all([geocode(originStr), geocode(destStr)]);
+      statusEl.textContent = 'WAITING';
+
+      if (!origin || !dest) return;
+
+      try {
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson`);
+        const data = await res.json();
+        
+        if (data.routes && data.routes.length > 0) {
+           if (currentRouteLayer) map.removeLayer(currentRouteLayer);
+           currentRouteMarkers.forEach(m => map.removeLayer(m));
+           currentRouteMarkers = [];
+
+           const route = data.routes[0].geometry;
+           currentRouteLayer = L.geoJSON(route, {
+             style: { color: 'var(--accent)', weight: 4, opacity: 0.9, dashArray: '10, 10', className: 'route-line' }
+           }).addTo(map);
+
+           const startIcon = L.divIcon({ html: '<div style="width:12px;height:12px;background:var(--green);border-radius:50%;border:2px solid #000;box-shadow:0 0 10px var(--green);"></div>', className: '' });
+           const endIcon = L.divIcon({ html: '<div style="width:12px;height:12px;background:var(--red);border-radius:50%;border:2px solid #000;box-shadow:0 0 10px var(--red);"></div>', className: '' });
+           
+           currentRouteMarkers.push(L.marker([origin.lat, origin.lon], {icon: startIcon}).bindPopup(originStr).addTo(map));
+           currentRouteMarkers.push(L.marker([dest.lat, dest.lon], {icon: endIcon}).bindPopup(destStr).addTo(map));
+
+           map.fitBounds(currentRouteLayer.getBounds(), { padding: [50, 50] });
+        }
+      } catch (e) { console.error('Routing error', e); }
+    }
 
     async function boot() {
       await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
