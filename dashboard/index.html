@@ -2051,7 +2051,8 @@
 
     async function loadFlights() {
       if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'get_flights', lat: 20.59, lon: 78.96 }));
+          const center = map.getCenter();
+          ws.send(JSON.stringify({ type: 'get_flights', lat: center.lat, lon: center.lng }));
       }
     }
 
@@ -2762,6 +2763,11 @@
         const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats.join(',')}&longitude=${lngs.join(',')}&current=temperature_2m`);
         const dataArr = await r.json();
         
+        if (!Array.isArray(dataArr)) {
+           console.warn('Thermal API returned error:', dataArr);
+           return;
+        }
+        
         const heatData = [];
         dataArr.forEach((d, idx) => {
            if(d && d.current && typeof d.current.temperature_2m !== 'undefined') {
@@ -2787,9 +2793,13 @@
       } catch(e) { console.error('Thermal map error', e); }
     }
 
+    let mapUpdateTimeout = null;
     map.on('moveend', () => {
-      // Refresh thermal map when user stops panning
-      loadThermal();
+      clearTimeout(mapUpdateTimeout);
+      mapUpdateTimeout = setTimeout(() => {
+        loadThermal();
+        loadFlights();
+      }, 800);
     });
 
     // ── Hover Weather Tooltip ────────────────────────────────────────────────────
