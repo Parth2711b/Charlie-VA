@@ -129,14 +129,15 @@
       --mono: 'Courier New', monospace;
     }
 
-    /* Map Filters - Glassmorphism Blend */
+    /* Map Filters - Ultra High Contrast Dark Mode */
     .leaflet-container {
       background: transparent !important;
     }
     
     .leaflet-layer {
       transition: filter 0.5s ease;
-      /* Using a native dark map, so no invert needed. */
+      /* Super high contrast inversion: turns black text to blinding white, and tan land to deep charcoal */
+      filter: grayscale(100%) invert(100%) contrast(2.5) brightness(1.5);
     }
 
     * {
@@ -1856,7 +1857,7 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
