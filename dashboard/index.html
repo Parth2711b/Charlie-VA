@@ -7,6 +7,7 @@
   <title>Charlie - Intel Command</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -1867,8 +1868,8 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    // Using Google Maps Hybrid (Satellite + White Labels) for high-contrast dark mode legibility without CSS hacks
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
+    // Using CartoDB Dark Matter: non-colourful, high-contrast, dark mode basemap
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
@@ -2739,6 +2740,55 @@
 
     // ── Boot ──────────────────────────────────────────────────────────────────────
     let radarLayer = null;
+    let heatLayer = null;
+
+    async function loadThermal() {
+      try {
+        const bounds = map.getBounds();
+        const latStep = (bounds.getNorth() - bounds.getSouth()) / 7;
+        const lngStep = (bounds.getEast() - bounds.getWest()) / 7;
+        
+        const lats = [], lngs = [];
+        for(let i=0; i<=7; i++) {
+          for(let j=0; j<=7; j++) {
+            lats.push((bounds.getSouth() + i * latStep).toFixed(2));
+            lngs.push((bounds.getWest() + j * lngStep).toFixed(2));
+          }
+        }
+        
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats.join(',')}&longitude=${lngs.join(',')}&current=temperature_2m`);
+        const dataArr = await r.json();
+        
+        const heatData = [];
+        dataArr.forEach((d, idx) => {
+           if(d && d.current && typeof d.current.temperature_2m !== 'undefined') {
+              const temp = d.current.temperature_2m;
+              // Normalize temp: -10C (0) to 40C (1)
+              let intensity = (temp + 10) / 50;
+              if (intensity < 0) intensity = 0;
+              if (intensity > 1) intensity = 1;
+              heatData.push([parseFloat(lats[idx]), parseFloat(lngs[idx]), intensity]);
+           }
+        });
+
+        if (heatLayer) map.removeLayer(heatLayer);
+        heatLayer = L.heatLayer(heatData, {
+          radius: Math.max(30, map.getZoom() * 10),
+          blur: Math.max(40, map.getZoom() * 10),
+          maxZoom: 10,
+          gradient: {0.1: '#0022ff', 0.3: '#00ffff', 0.5: '#00ff00', 0.7: '#ffff00', 0.9: '#ff0000'}
+        }).addTo(map);
+        
+        // Ensure radar stays on top
+        if (radarLayer) radarLayer.bringToFront();
+      } catch(e) { console.error('Thermal map error', e); }
+    }
+
+    map.on('moveend', () => {
+      // Refresh thermal map when user stops panning
+      loadThermal();
+    });
+
     async function loadRadar() {
       try {
         const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
@@ -2801,9 +2851,10 @@
 
     async function boot() {
       await Promise.all([loadMarkets(), loadWeather(), loadNews('india'), loadRadar()]);
+      loadThermal();
     }
     boot();
-    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadRadar(); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadRadar(); loadThermal(); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>
