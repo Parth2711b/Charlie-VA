@@ -89,6 +89,81 @@
       --radius: 8px;
     }
 
+    body.theme-ocean {
+      --bg: radial-gradient(circle at top right, #001a33, #000a14);
+      --surface: rgba(0, 40, 80, 0.5);
+      --panel: rgba(0, 20, 40, 0.7);
+      --border: #00ccff;
+      --border2: rgba(0, 204, 255, 0.3);
+      --text: #99ebff;
+      --text2: #ccf5ff;
+      --accent: #00ffff;
+      --accent2: #0088cc;
+      --radius: 12px;
+    }
+
+    body.theme-synthwave {
+      --bg: linear-gradient(180deg, #1a0033 0%, #330033 100%);
+      --surface: rgba(40, 0, 60, 0.6);
+      --panel: rgba(20, 0, 40, 0.8);
+      --border: #ff00ff;
+      --border2: rgba(255, 0, 255, 0.4);
+      --text: #ff99cc;
+      --text2: #ffffff;
+      --accent: #00ffff;
+      --accent2: #ff00ff;
+      --radius: 4px;
+    }
+
+    body.theme-bloodmoon {
+      --bg: radial-gradient(circle at center, #2a0000, #0a0000);
+      --surface: rgba(60, 0, 0, 0.5);
+      --panel: rgba(40, 0, 0, 0.8);
+      --border: #ff0000;
+      --border2: rgba(255, 0, 0, 0.3);
+      --text: #ff9999;
+      --text2: #ffcccc;
+      --accent: #ff3333;
+      --accent2: #990000;
+      --radius: 0px;
+      --mono: 'Courier New', monospace;
+    }
+
+    /* Map Filters */
+    .leaflet-container {
+      transition: filter 0.5s ease;
+    }
+    
+    /* Default Dark Map */
+    body:not([class*="theme-"]) .leaflet-layer,
+    body.theme-jarvis .leaflet-layer {
+      filter: grayscale(100%) invert(100%) hue-rotate(180deg) contrast(1.2);
+    }
+
+    body.theme-hacker .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(80deg) brightness(0.8) contrast(2);
+    }
+
+    body.theme-cyberpunk .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(250deg) brightness(0.9) contrast(2);
+    }
+
+    body.theme-ember .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(330deg) brightness(0.7) contrast(1.5) saturate(3);
+    }
+
+    body.theme-ocean .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(190deg) brightness(0.9) contrast(1.2) saturate(2);
+    }
+
+    body.theme-synthwave .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(270deg) brightness(0.8) contrast(1.5) saturate(2.5);
+    }
+
+    body.theme-bloodmoon .leaflet-layer {
+      filter: grayscale(100%) sepia(100%) hue-rotate(320deg) brightness(0.6) contrast(2) saturate(4);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -244,6 +319,138 @@
       50% {
         opacity: 0.3;
       }
+    }
+
+    /* Settings Modal */
+    #settings-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #settings-modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .settings-content {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      width: 400px;
+      max-width: 90%;
+      padding: 24px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+
+    #settings-modal.show .settings-content {
+      transform: scale(1);
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .settings-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .settings-close {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+    }
+    
+    .settings-close:hover {
+      color: var(--text2);
+    }
+
+    .settings-section {
+      margin-bottom: 20px;
+    }
+
+    .settings-section-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .theme-btn {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .theme-btn:hover {
+      border-color: var(--accent);
+      color: var(--text2);
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    .theme-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: bold;
+    }
+
+    .action-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      padding: 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 13px;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text2);
     }
 
     /* Ticker */
@@ -1246,6 +1453,7 @@
       <div class="h-meta-item"><span class="label">ASSETS:</span><span class="val" id="asset-count">-</span></div>
     </div>
     <div class="h-right">
+      <div id="settings-btn" class="charlie-status" onclick="toggleSettings()" style="border-color: var(--muted); color: var(--text); cursor: pointer;">SETTINGS</div>
       <div id="interview-badge" class="charlie-status" style="display: none; border-color: var(--red); color: var(--red);">
         <div class="status-dot pulse" style="background: var(--red);"></div>
         <span>INTERVIEW ACTIVE</span>
@@ -1484,18 +1692,92 @@
     <iframe id="graph-frame" src=""></iframe>
   </div>
 
+  <!-- Settings Modal -->
+  <div id="settings-modal">
+    <div class="settings-content">
+      <div class="settings-header">
+        <div class="settings-title">SYSTEM SETTINGS</div>
+        <div class="settings-close" onclick="toggleSettings()" style="cursor:pointer;">×</div>
+      </div>
+      
+      <div class="settings-section">
+        <div class="settings-section-title">Aesthetics Theme</div>
+        <div class="theme-grid">
+          <button class="theme-btn active" onclick="setTheme('default')">Default Glass</button>
+          <button class="theme-btn" onclick="setTheme('theme-jarvis')">J.A.R.V.I.S</button>
+          <button class="theme-btn" onclick="setTheme('theme-hacker')">Hacker / Terminal</button>
+          <button class="theme-btn" onclick="setTheme('theme-cyberpunk')">Cyberpunk</button>
+          <button class="theme-btn" onclick="setTheme('theme-ember')">Ember</button>
+          <button class="theme-btn" onclick="setTheme('theme-ocean')">Ocean</button>
+          <button class="theme-btn" onclick="setTheme('theme-synthwave')">Synthwave</button>
+          <button class="theme-btn" onclick="setTheme('theme-bloodmoon')">Bloodmoon</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Manual Overrides</div>
+        <div class="action-grid">
+          <button class="action-btn" onclick="triggerAction('interview')">
+            Start Interview Mode <span>▶</span>
+          </button>
+          <button class="action-btn" onclick="triggerAction('memory')">
+            Clear Memory Bank <span>⚠</span>
+          </button>
+          <button class="action-btn" onclick="triggerAction('shutdown')">
+            Shutdown System <span>⏻</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ── IST Clock ─────────────────────────────────────────────────────────────────
     function updateClock() {
       const now = new Date();
-      // IST = UTC + 5:30
-      const ist = new Date(now.getTime() + (5 * 60 + 30) * 60 * 1000);
-      const pad = n => String(n).padStart(2, '0');
-      document.getElementById('clock').textContent =
-        `${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}:${pad(ist.getUTCSeconds())} IST`;
+      document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // ── Settings Logic ───────────────────────────────────────────────────────────
+    function toggleSettings() {
+      const modal = document.getElementById('settings-modal');
+      if (modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+      } else {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10); 
+      }
+    }
+
+    function setTheme(themeClass) {
+      document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
+      if (themeClass !== 'default') {
+        document.body.classList.add(themeClass);
+      }
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.theme-btn')).find(btn => btn.getAttribute('onclick').includes(themeClass));
+      if (activeBtn) activeBtn.classList.add('active');
+      localStorage.setItem('charlie-theme', themeClass);
+    }
+    
+    const savedTheme = localStorage.getItem('charlie-theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+
+    function triggerAction(action) {
+      toggleSettings();
+      let msg = "";
+      if (action === 'interview') msg = "start interview mode";
+      if (action === 'memory') msg = "clear memory";
+      if (action === 'shutdown') msg = "shutdown system";
+      if (msg && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'input', text: msg }));
+      }
+    }
 
     // ── Panel Management ──────────────────────────────────────────────────────────
     const panelState = { news: 'normal', map: 'normal', browser: 'minimized', music: 'minimized', charlie: 'normal' };
@@ -1528,16 +1810,13 @@
 
     function minimizePanel(id, e) {
       if (e) e.stopPropagation();
-      // "Minimize" in the new Grid context just means returning it to the grid if it was focused.
       resetPanels();
     }
 
     function handlePanelClick(id) {
-      // Not strictly necessary in grid mode unless we want click-to-focus.
     }
 
     function resetPanels() {
-      // Unfocus everything
       document.querySelectorAll('.panel.focused').forEach(p => p.classList.remove('focused'));
       document.getElementById('focus-overlay').style.display = 'none';
       Object.keys(panelState).forEach(k => delete panelState[k]);
@@ -1548,12 +1827,6 @@
     let draggedPanelId = null;
 
     function handleDragStart(e) {
-      // Allow dragging only from the header
-      if (!e.target.closest('.panel-hdr') && e.target.classList.contains('panel')) {
-        // e.preventDefault(); // Might prevent dragging if they click the body. We rely on draggable="true" on the panel, but check if the click started on header.
-        // Actually, HTML5 drag and drop fires on the draggable element itself. 
-        // We'll just set the data.
-      }
       draggedPanelId = e.currentTarget.id;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', draggedPanelId);
@@ -1573,7 +1846,6 @@
       draggedEl.style.opacity = '1';
 
       if (draggedPanelId && draggedPanelId !== targetPanelId) {
-        // Swap grid-area instead of DOM positions
         const draggedArea = getComputedStyle(draggedEl).gridArea.split('/')[0].trim();
         const targetArea = getComputedStyle(targetEl).gridArea.split('/')[0].trim();
 
@@ -1585,7 +1857,6 @@
       draggedPanelId = null;
     }
 
-    // Clean up opacity if drag ends without drop
     document.addEventListener('dragend', (e) => {
       if (e.target.classList && e.target.classList.contains('panel')) {
         e.target.style.opacity = '1';
@@ -1595,25 +1866,21 @@
     // ── Voice command routing ─────────────────────────────────────────────────────
     function handleVoiceCommand(text) {
       const t = text.toLowerCase();
-      // Panel focus commands
       if (/focus.*(news|intel|feed)/.test(t)) { focusPanel('news'); return; }
       if (/focus.*(map|screen|world)/.test(t)) { focusPanel('map'); return; }
       if (/focus.*charlie/.test(t)) { focusPanel('charlie'); return; }
       if (/focus.*(music|spotify|player)/.test(t)) { focusPanel('music'); return; }
       if (/reset|normal view|show all/.test(t)) { resetPanels(); return; }
-      // Content commands
       if (/open.*youtube|show.*youtube|play.*youtube/.test(t)) { focusPanel('browser'); setContentMode('yt'); return; }
       if (/stop.*(youtube|video)|close.*(youtube|video)/.test(t)) { stopVideo(); return; }
       if (/show.*news|focus.*news/.test(t)) { focusPanel('news'); switchNewsTab('india'); return; }
       if (/open.*map|show.*map/.test(t)) { focusPanel('map'); return; }
-      // URL from Charlie response
       const urlMatch = text.match(/https?:\/\/[^\s]+/);
       if (urlMatch) { loadUrl(urlMatch[0], 'url'); }
     }
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    // Using Google Maps tiles because they accurately respect local IP borders (e.g. Kashmir in India)
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
@@ -1721,7 +1988,6 @@
         return;
       }
 
-      // Auto-expand logic: if it transitions from not playing to playing, un-minimize the panel!
       if (data.is_playing && !_lastMusicState) {
         if (panelState['music'] === 'minimized') {
           minimizePanel('music');
@@ -1745,7 +2011,7 @@
 
       if (data.is_playing) {
         status.textContent = 'PLAYING';
-        status.style.color = '#1db954'; // Spotify Green
+        status.style.color = '#1db954';
         art.style.transform = 'scale(1.02)';
       } else {
         status.textContent = 'PAUSED';
@@ -1837,8 +2103,6 @@
     }
 
     // ── Markets ───────────────────────────────────────────────────────────────────
-    // Yahoo Finance is CORS-blocked in browsers - only CoinGecko (crypto) works client-side.
-    // Indian indices / forex are shown as placeholders until a server-side proxy is added.
     async function loadMarkets() {
       try {
         const cgRes = await fetch(
@@ -1847,8 +2111,6 @@
         ).catch(() => null);
 
         const items = [];
-
-        // Static placeholders for indices (no browser-accessible free API for these)
         const staticItems = [
           { label: 'NIFTY', sym: '^NSEI', price: '-', chg: null },
           { label: 'SENSEX', sym: '^BSESN', price: '-', chg: null },
@@ -1857,7 +2119,6 @@
         ];
         staticItems.forEach(i => items.push(i));
 
-        // Crypto from CoinGecko (CORS-friendly)
         if (cgRes && cgRes.ok) {
           const cg = await cgRes.json().catch(() => ({}));
           if (cg.bitcoin) items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
@@ -1917,7 +2178,6 @@
 
     function openGraph(label, sym) {
       if (!sym || sym === 'BTCINR' || sym === 'ETHINR' || sym === 'SOLINR') {
-        // CoinGecko chart for crypto
         const cgMap = { BTCINR: 'bitcoin', ETHINR: 'ethereum', SOLINR: 'solana' };
         const cgId = cgMap[sym];
         if (cgId) {
@@ -2031,9 +2291,8 @@
     const canvas = document.getElementById('waveform-canvas');
     const ctx2d = canvas.getContext('2d');
     let analyser, dataArray, micActive = false;
-    let charlieListening = false; // set by WebSocket
-    let charlieSpeaking = false;  // set by WebSocket
-
+    let charlieListening = false;
+    let charlieSpeaking = false;
     let audioCtx = null;
 
     function getAudioContext() {
@@ -2069,34 +2328,19 @@
       try {
         const audioUrl = "data:audio/mp3;base64," + base64Data;
         const audio = new Audio(audioUrl);
-        
-        // Connect to analyser for waveform
         const ac = getAudioContext();
         if (ac.state === 'suspended') await ac.resume();
         const source = ac.createMediaElementSource(audio);
         source.connect(analyser);
         source.connect(ac.destination);
-        
-        window.currentAudioSource = audio; // So we can stop it if needed
-        
-        audio.onended = () => {
-          charlieAudioPlaying = false;
-          processAudioQueue();
-        };
-        
-        audio.onerror = (e) => {
-          console.error("Audio element error", e);
-          charlieAudioPlaying = false;
-          processAudioQueue();
-        };
-
+        window.currentAudioSource = audio;
+        audio.onended = () => { charlieAudioPlaying = false; processAudioQueue(); };
+        audio.onerror = (e) => { charlieAudioPlaying = false; processAudioQueue(); };
         charlieSpeaking = true;
         document.getElementById('wf-status').textContent = 'SPEAKING';
         document.getElementById('wf-status').className = 'wf-status';
-        
         await audio.play();
       } catch (e) {
-        console.error('Audio playback failed', e);
         charlieAudioPlaying = false;
         processAudioQueue();
       }
@@ -2113,71 +2357,45 @@
         const src = ac.createMediaStreamSource(stream);
         src.connect(analyser);
         micActive = true;
-        
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        mediaRecorder.ondataavailable = e => {
-          if (e.data.size > 0) audioChunks.push(e.data);
-        };
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
         mediaRecorder.onstop = () => {
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
           audioChunks = [];
           if (ws && ws.readyState === WebSocket.OPEN) {
-             ws.send(blob); // Sends binary message to websocket_bridge.py
+             ws.send(blob);
              document.getElementById('wf-status').textContent = 'PROCESSING';
              document.getElementById('wf-status').className = 'wf-status speaking';
              setCharlieStatus('online', 'PROCESSING...');
           }
         };
-        
         const micBtn = document.getElementById('mic-btn');
         micBtn.textContent = 'HOLD TO TALK';
-        micBtn.style.background = 'var(--surface)';
-        micBtn.style.color = 'var(--text2)';
-        micBtn.onclick = null; // Remove initMic click handler
-        
-        // Mouse events
+        micBtn.onclick = null;
         micBtn.addEventListener('mousedown', startRecording);
         micBtn.addEventListener('mouseup', stopRecording);
         micBtn.addEventListener('mouseleave', stopRecording);
-        
-        // Touch events
         micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, {passive: false});
         micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, {passive: false});
-        
       } catch (e) { document.getElementById('wf-status').textContent = 'MIC DENIED'; }
     }
 
     function startRecording() {
        if (!mediaRecorder || mediaRecorder.state === 'recording') return;
-       
-       // Interrupt Charlie if he's speaking (barge-in)
-       if (window.currentAudioSource) {
-           window.currentAudioSource.stop();
-           window.currentAudioSource = null;
-       }
+       if (window.currentAudioSource) { window.currentAudioSource.stop(); window.currentAudioSource = null; }
        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'barge_in' }));
-       
        audioChunks = [];
        mediaRecorder.start();
-       
        document.getElementById('wf-status').textContent = 'LISTENING';
        document.getElementById('wf-status').className = 'wf-status listening';
        setCharlieStatus('listening', 'LISTENING...');
        charlieListening = true;
-       
-       const micBtn = document.getElementById('mic-btn');
-       micBtn.style.background = 'var(--accent)';
-       micBtn.style.color = 'var(--bg)';
     }
 
     function stopRecording() {
        if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
        mediaRecorder.stop();
        charlieListening = false;
-       
-       const micBtn = document.getElementById('mic-btn');
-       micBtn.style.background = 'var(--surface)';
-       micBtn.style.color = 'var(--text2)';
     }
 
     function drawWaveform() {
@@ -2193,30 +2411,16 @@
         for (let i = 0; i < bars; i++) {
           const x = startX + i * (barWidth + gap);
           let val = 0.05;
-
-          if (charlieListening) {
-            val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
-          }
-
+          if (charlieListening) val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
           const barH = val * (H * 0.7);
-          const hue = charlieSpeaking ? 140 + val * 40 : 185; // Green to Cyan
+          const hue = charlieSpeaking ? 140 + val * 40 : 185;
           const alpha = charlieSpeaking ? 0.5 + val * 0.5 : (charlieListening ? 0.3 : 0.15);
-
           ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
-          ctx2d.shadowBlur = charlieSpeaking && val > 0.4 ? 10 : 0;
-          ctx2d.shadowColor = `hsla(${hue},100%,60%,1)`;
-
-          ctx2d.beginPath();
-          ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
-          ctx2d.fill();
+          ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
         }
-        ctx2d.shadowBlur = 0;
         return;
       }
-
       analyser.getByteFrequencyData(dataArray);
-      const maxAmp = Math.max(...dataArray);
-      const isVoice = maxAmp > 15;
       const showActive = isVoice || charlieSpeaking;
 
       for (let i = 0; i < bars; i++) {
