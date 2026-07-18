@@ -129,15 +129,13 @@
       --mono: 'Courier New', monospace;
     }
 
-    /* Map Filters - Ultra High Contrast Dark Mode */
+    /* Map Filters */
     .leaflet-container {
-      background: transparent !important;
+      background: #000 !important;
     }
     
     .leaflet-layer {
-      transition: filter 0.5s ease;
-      /* Super high contrast inversion: turns black text to blinding white, and tan land to deep charcoal */
-      filter: grayscale(100%) invert(100%) contrast(2.5) brightness(1.5);
+      /* No filter needed for satellite hybrid map */
     }
 
     * {
@@ -1857,7 +1855,8 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
+    // Using Google Maps Hybrid (Satellite + White Labels) for high-contrast dark mode legibility without CSS hacks
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
