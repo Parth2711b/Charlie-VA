@@ -136,8 +136,8 @@
     }
     
     .leaflet-layer {
-      /* Base map with slight boost to make borders/text visible but not glaring */
-      filter: brightness(1.6) contrast(1.2);
+      /* Invert Google Maps, boost contrast for black landmass, reduce brightness for subtle grey text */
+      filter: grayscale(100%) invert(100%) contrast(1.4) brightness(0.7);
     }
 
     * {
@@ -1870,8 +1870,9 @@
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
     
-    // Using CartoDB Dark Matter with labels built-in, brightened slightly via CSS
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+    // Using Google Maps to ensure correct local geopolitical borders (e.g., Kashmir)
+    // Filtered via CSS to create a subtle dark mode with grey text
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
