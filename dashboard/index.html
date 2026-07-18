@@ -136,9 +136,7 @@
     
     .leaflet-layer {
       transition: filter 0.5s ease;
-      /* Pure high-contrast dark mode. Text stays crisp white, landmass is charcoal. */
-      filter: grayscale(100%) invert(100%) contrast(1.5) brightness(0.8);
-      opacity: 1;
+      /* Using a native dark map, so no invert needed. */
     }
 
     * {
@@ -1858,7 +1856,7 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
