@@ -2746,8 +2746,16 @@
     let radarLayer = null;
     let heatLayer = null;
 
+    function clearThermal() {
+      if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+      }
+    }
+
     async function loadThermal() {
       try {
+        clearThermal();
         const bounds = map.getBounds();
         const latStep = (bounds.getNorth() - bounds.getSouth()) / 7;
         const lngStep = (bounds.getEast() - bounds.getWest()) / 7;
@@ -2780,7 +2788,7 @@
            }
         });
 
-        if (heatLayer) map.removeLayer(heatLayer);
+        clearThermal();
         heatLayer = L.heatLayer(heatData, {
           radius: 60,
           blur: 80,
@@ -2792,6 +2800,8 @@
         if (radarLayer) radarLayer.bringToFront();
       } catch(e) { console.error('Thermal map error', e); }
     }
+
+    map.on('zoomstart', clearThermal);
 
     let mapUpdateTimeout = null;
     map.on('moveend', () => {
