@@ -135,11 +135,10 @@
     }
     
     .leaflet-layer {
-      transition: filter 0.5s ease, opacity 0.5s ease;
-      /* Default dark mode inversion that looks incredibly crisp */
-      filter: grayscale(100%) invert(100%) contrast(1.2);
-      /* This allows the theme's panel background color to naturally tint the map */
-      opacity: 0.65;
+      transition: filter 0.5s ease;
+      /* Pure high-contrast dark mode. Text stays crisp white, landmass is charcoal. */
+      filter: grayscale(100%) invert(100%) contrast(1.5) brightness(0.8);
+      opacity: 1;
     }
 
     * {
@@ -2479,6 +2478,8 @@
               try { localStorage.setItem('charlie_user_id', d.user_id); } catch(e) {}
               document.getElementById('auth-overlay').style.display = 'none';
               ws.send(JSON.stringify({ type: 'authenticate', user_id: d.user_id }));
+              // Load flights once authenticated and websocket is fully ready
+              setTimeout(loadFlights, 500);
             } else {
               document.getElementById('auth-error').textContent = d.error || 'Authentication failed';
               document.getElementById('auth-submit-btn').textContent = authMode === 'login' ? 'AUTHENTICATE →' : 'REGISTER →';
@@ -2742,7 +2743,6 @@
     // ── Boot ──────────────────────────────────────────────────────────────────────
     async function boot() {
       await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
-      loadFlights();
     }
     boot();
     setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
