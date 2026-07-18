@@ -30,6 +30,7 @@ SYSTEM_PROMPT = (
     "You are capable of seeing the screen, reading the camera, searching the web, checking live weather/flights, "
     "setting timers, taking notes, playing music via Spotify, and conducting mock interviews. "
     "IMPORTANT: If the user asks you to open a website, you CAN do so by simply outputting the URL in your response. The dashboard will automatically intercept the URL and open it for the user. "
+    "CRITICAL ROUTING RULE: If the user asks for directions, a path, or a route between two places, you MUST output a Google Maps direction URL in the format https://www.google.com/maps/dir/<Origin>/<Destination> so the dashboard can draw it on the map. "
     "CRITICAL LENGTH RULE: Your responses are spoken aloud. "
     "Be as brief and concise as humanly possible for ALL answers. If a question can be answered in a few words, do so. "
     "ONLY give long, detailed answers if the user explicitly asks for an explanation, an essay, or a detailed story."

@@ -1755,10 +1755,8 @@
     }
 
     function setTheme(themeClass) {
-      document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
-      if (themeClass !== 'default') {
-        document.body.classList.add(themeClass);
-      }
+      document.body.className = themeClass;
+      localStorage.setItem('charlie_theme', themeClass);
       document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = Array.from(document.querySelectorAll('.theme-btn')).find(btn => btn.getAttribute('onclick').includes(themeClass));
       if (activeBtn) activeBtn.classList.add('active');
@@ -2413,49 +2411,47 @@
       const totalWidth = bars * (barWidth + gap);
       const startX = (W - totalWidth) / 2;
 
-      const style = getComputedStyle(document.body);
-      const colorAccent = style.getPropertyValue('--accent').trim() || '#00d4ff';
-      const colorGreen = style.getPropertyValue('--green').trim() || '#4ade80';
-
       if (!analyser || (!micActive && !charlieSpeaking)) {
         const t = Date.now() / 1000;
-        ctx2d.fillStyle = colorAccent;
-        ctx2d.shadowColor = colorAccent;
-        ctx2d.shadowBlur = 6;
         for (let i = 0; i < bars; i++) {
           const x = startX + i * (barWidth + gap);
           let val = 0.05;
           if (charlieListening) val = Math.abs(Math.sin(t * 3 + i * 0.2)) * 0.2 + 0.05;
           const barH = val * (H * 0.7);
-          ctx2d.globalAlpha = charlieListening ? 0.8 : 0.5;
-          ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(3, barH));
+          const hue = charlieSpeaking ? 140 + val * 40 : 185;
+          const alpha = charlieSpeaking ? 0.5 + val * 0.5 : (charlieListening ? 0.3 : 0.5);
+          ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
+          ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
         }
-        ctx2d.globalAlpha = 1.0;
-        ctx2d.shadowBlur = 0;
         return;
       }
       analyser.getByteFrequencyData(dataArray);
+      const maxAmp = Math.max(...dataArray);
+      const isVoice = maxAmp > 15;
       const showActive = isVoice || charlieSpeaking;
 
       for (let i = 0; i < bars; i++) {
         const x = startX + i * (barWidth + gap);
+        // sample lower frequencies more (speech range)
         const dataIdx = Math.floor((i / bars) * (dataArray.length * 0.6));
         const rawVal = dataArray[dataIdx] / 255;
-        const val = rawVal * rawVal;
+        const val = rawVal * rawVal; // sharp spikes
 
-        const barH = val * (H * 0.8) + 3;
+        const barH = val * (H * 0.8) + 2;
 
-        ctx2d.fillStyle = charlieSpeaking ? colorGreen : colorAccent;
-        ctx2d.shadowColor = charlieSpeaking ? colorGreen : colorAccent;
-        ctx2d.shadowBlur = (showActive && val > 0.2) ? 15 : 5;
-        ctx2d.globalAlpha = charlieSpeaking ? 0.7 + val * 0.3 : 0.6 + val * 0.4;
+        // Use green for Charlie, cyan for user mic
+        const hue = charlieSpeaking ? 140 + val * 40 : 185 + val * 60;
+        const alpha = charlieSpeaking ? 0.6 + val * 0.4 : 0.3 + val * 0.7;
+
+        ctx2d.fillStyle = `hsla(${hue},100%,60%,${alpha})`;
+        ctx2d.shadowBlur = (showActive && val > 0.3) ? 10 : 0;
+        ctx2d.shadowColor = charlieSpeaking ? `hsla(${hue},100%,60%,1)` : '#00d4ff';
 
         ctx2d.beginPath();
-        ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(3, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(3, barH));
+        ctx2d.roundRect ? ctx2d.roundRect(x, cy - barH / 2, barWidth, Math.max(2, barH), 2) : ctx2d.fillRect(x, cy - barH / 2, barWidth, Math.max(2, barH));
         ctx2d.fill();
       }
       ctx2d.shadowBlur = 0;
-      ctx2d.globalAlpha = 1.0;
     }
 
     drawWaveform();
@@ -2833,13 +2829,10 @@
       } catch(e) { console.error('Thermal map error', e); }
     }
 
-    map.on('zoomstart', clearThermal);
-
     let mapUpdateTimeout = null;
     map.on('moveend', () => {
       clearTimeout(mapUpdateTimeout);
       mapUpdateTimeout = setTimeout(() => {
-        loadThermal();
         loadFlights();
       }, 800);
     });
@@ -2893,9 +2886,19 @@
 
     async function geocode(query) {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
-        const data = await res.json();
+        let res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+        let data = await res.json();
         if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        
+        // Fallback: If exact building isn't found, strip the first part and try searching the broader area
+        if (query.includes(',')) {
+           const parts = query.split(',');
+           parts.shift(); // remove the most specific part
+           const fallbackQuery = parts.join(',').trim();
+           res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fallbackQuery)}&format=json&limit=1`);
+           data = await res.json();
+           if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
       } catch (e) { console.error('Geocode error', e); }
       return null;
     }
@@ -2904,9 +2907,13 @@
       const statusEl = document.getElementById('stt-status');
       statusEl.textContent = 'ROUTING...';
       const [origin, dest] = await Promise.all([geocode(originStr), geocode(destStr)]);
-      statusEl.textContent = 'WAITING';
 
-      if (!origin || !dest) return;
+      if (!origin || !dest) {
+         statusEl.textContent = 'ROUTE FAILED: LOCATION NOT FOUND';
+         setTimeout(() => { statusEl.textContent = 'WAITING'; }, 4000);
+         return;
+      }
+      statusEl.textContent = 'WAITING';
 
       try {
         const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${dest.lon},${dest.lat}?overview=full&geometries=geojson`);
@@ -2935,10 +2942,9 @@
 
     async function boot() {
       await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
-      loadThermal();
     }
     boot();
-    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadThermal(); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>
