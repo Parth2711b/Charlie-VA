@@ -871,6 +871,25 @@
       z-index: 500;
       display: flex;
       flex-direction: column;
+      gap: 5px;
+    }
+
+    .map-hover-tooltip {
+      position: fixed;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: var(--mono);
+      pointer-events: none;
+      z-index: 10000;
+      display: none;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      transition: opacity 0.2s;
+    }
       gap: 4px;
     }
 
@@ -2002,10 +2021,7 @@
       { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
     ];
 
-    const wxMarkers = [];
-
     async function loadWeather() {
-      wxMarkers.forEach(m => map.removeLayer(m)); wxMarkers.length = 0;
       try {
         const results = await Promise.all(CITIES.map(async c => {
           const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,windspeed_10m`);
@@ -2013,17 +2029,7 @@
           return { ...c, temp: Math.round(d.current.temperature_2m), wind: Math.round(d.current.windspeed_10m) };
         }));
 
-        results.forEach(c => {
-          const col = tempColor(c.temp);
-          const icon = L.divIcon({
-            html: `<div style="background:${col};border:1px solid rgba(255,255,255,0.4);border-radius:3px;padding:1px 5px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#040810;font-weight:700;white-space:nowrap;box-shadow:0 0 10px ${col}88;">${c.temp}°</div>`,
-            className: '', iconAnchor: [20, 10],
-          });
-          const m = L.marker([c.lat, c.lon], { icon })
-            .bindPopup(`<b style="color:#00d4ff;">${c.name}</b><br>${c.temp}°C | ${c.wind} km/h`)
-            .addTo(map);
-          wxMarkers.push(m);
-        });
+        // Removed static map markers. Data is now only displayed in the bottom ticker.
 
         document.getElementById('city-count').textContent = `${results.length} CITIES`;
         document.getElementById('weather-cities').innerHTML = results.map(c =>
@@ -2064,7 +2070,7 @@
           flightMarkers.push(m);
         });
         document.getElementById('flight-count').textContent = `${states.length} FLIGHTS`;
-        document.getElementById('asset-count').textContent = `${states.length + wxMarkers.length} ACTIVE`;
+        document.getElementById('asset-count').textContent = `${states.length} ACTIVE`;
       } catch (e) {
         document.getElementById('flight-count').textContent = 'OPENSKY N/A';
       }
@@ -2732,11 +2738,72 @@
     }
 
     // ── Boot ──────────────────────────────────────────────────────────────────────
+    let radarLayer = null;
+    async function loadRadar() {
+      try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        const data = await res.json();
+        const past = data.radar.past;
+        if (past && past.length > 0) {
+          const latest = past[past.length - 1].time;
+          if (radarLayer) map.removeLayer(radarLayer);
+          radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latest}/256/{z}/{x}/{y}/2/1_1.png`, {
+            opacity: 0.65,
+            maxZoom: 18,
+            zIndex: 400
+          }).addTo(map);
+        }
+      } catch(e) { console.error('Radar error', e); }
+    }
+
+    // ── Hover Weather Tooltip ────────────────────────────────────────────────────
+    let hoverTimeout = null;
+    const hoverTooltip = document.createElement('div');
+    hoverTooltip.className = 'map-hover-tooltip';
+    document.body.appendChild(hoverTooltip);
+
+    function getWmoDesc(code) {
+      if(code<=1) return 'Clear';
+      if(code<=3) return 'Cloudy';
+      if(code<=48) return 'Fog';
+      if(code<=57) return 'Drizzle';
+      if(code<=67) return 'Rain';
+      if(code<=79) return 'Snow';
+      if(code<=82) return 'Showers';
+      if(code<=99) return 'Storm';
+      return 'Unknown';
+    }
+
+    map.on('mousemove', (e) => {
+      hoverTooltip.style.display = 'none';
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(async () => {
+        try {
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${e.latlng.lat}&longitude=${e.latlng.lng}&current=temperature_2m,weather_code`);
+          const d = await r.json();
+          if (d && d.current) {
+            const temp = Math.round(d.current.temperature_2m);
+            const col = tempColor(temp);
+            const desc = getWmoDesc(d.current.weather_code);
+            hoverTooltip.innerHTML = `<span style="color:${col};font-weight:bold;font-size:13px;">${temp > 0 ? '+':''}${temp}°C</span> &nbsp;|&nbsp; <span style="color:var(--text2);">${desc}</span>`;
+            hoverTooltip.style.display = 'block';
+            hoverTooltip.style.left = (e.originalEvent.clientX + 15) + 'px';
+            hoverTooltip.style.top = (e.originalEvent.clientY + 15) + 'px';
+          }
+        } catch(err) {}
+      }, 500); // 500ms debounce to prevent API spam
+    });
+
+    map.on('mouseout', () => {
+      clearTimeout(hoverTimeout);
+      hoverTooltip.style.display = 'none';
+    });
+
     async function boot() {
-      await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
+      await Promise.all([loadMarkets(), loadWeather(), loadNews('india'), loadRadar()]);
     }
     boot();
-    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadRadar(); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>
