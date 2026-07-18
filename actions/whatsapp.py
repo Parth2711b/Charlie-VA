@@ -12,7 +12,7 @@ but works for personal use. Do NOT commit contacts or phone numbers to Git.
 import logging
 import re
 import asyncio
-import pywhatkit
+import os
 from config import WHATSAPP_DEFAULT_WAIT
 
 logger = logging.getLogger("Charlie.whatsapp")
@@ -69,18 +69,19 @@ class WhatsAppAction:
         logger.info("Sending WhatsApp to %s (%s): %s", name, phone, message)
 
         try:
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None,
-                lambda: pywhatkit.sendwhatmsg_instantly(
-                    phone_no=phone,
-                    message=message,
-                    wait_time=WHATSAPP_DEFAULT_WAIT,
-                    tab_close=True,
-                    close_time=3
-                )
+            script_path = os.path.join(os.path.dirname(__file__), "whatsapp_service", "send.js")
+            process = await asyncio.create_subprocess_exec(
+                "node", script_path, phone, message,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
-            return f"Message sent to {name}."
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                return f"Message sent to {name}."
+            else:
+                logger.error("WhatsApp Baileys send failed: %s", stderr.decode())
+                return f"Failed to send message to {name}."
         except Exception as e:
             logger.error("WhatsApp send failed: %s", e)
-            return f"Failed to send message to {name}. Make sure WhatsApp Web is open in Chrome."
+            return f"Failed to send message to {name}. Make sure Node.js is installed."

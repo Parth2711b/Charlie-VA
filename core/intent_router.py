@@ -28,7 +28,7 @@ SHUTDOWN_WORDS = [
 INTENT_PATTERNS: list[tuple[str, list[str]]] = [
     ("youtube",    ["youtube", "search youtube", "find on youtube", "play on youtube", "play video on youtube"]),
     ("arxiv",      ["search arxiv", "find papers on", "latest research on", "research about", "papers about", "papers on"]),
-    ("interview",  ["start a mock interview", "interview me", "practice for my interview", "mock interview", "coding interview", "practice coding"]),
+    ("interview",  ["start a mock interview", "interview me", "practice for my interview", "mock interview", "coding interview", "practice coding", "interview mode"]),
     ("debug",      ["why did it crash", "read the traceback", "explain this error", "what went wrong", "debug this"]),
     ("research",   ["read my pdfs", "ingest pdfs", "read my papers", "scan documents", "read my research"]),
     ("weather",    ["weather", "temperature", "forecast", "how hot", "how cold", "what's the temp"]),
@@ -37,6 +37,7 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
     ("clear_memory", ["clear memory", "forget everything", "delete memory", "reset memory"]),
     ("whatsapp",   ["whatsapp", "send message", "message to", "text to", "send a message"]),
     ("calculator", ["calculator", "calculate", "compute", "how much is", "times", "plus", "minus", "divided by", "square root"]),
+    ("schedule",   ["schedule", "remind me on", "add to my calendar", "book a meeting", "new event", "what is my schedule", "what's my schedule", "what do i have", "my events", "mark done"]),
 
     ("camera_vision",  ["look at", "what do you see", "camera", "what am i holding", "describe this"]),
     ("screen_vision",  ["screenshot", "what's on my screen", "what on my screen"]),
@@ -47,7 +48,8 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
     ("dashboard",  ["show me the map", "global map", "focus news", "focus map",
                     "focus charlie", "show news", "reset panels", "show dashboard", "focus on", "open the map", "open map", "change theme", "hacker theme", "jarvis theme", "cyberpunk theme", "switch theme"]),
     ("music",      ["play music", "play a song", "pause", "resume", "skip", "next track", "pause music", "resume music", "play song", "play artist"]),
-    ("browser",    ["open ", "go to ", "visit ", "browse ", "load "])
+    ("browser",    ["open ", "go to ", "visit ", "browse ", "load "]),
+    ("web_search", ["search the web for", "look up information about", "find online", "google this", "compare statistics", "search google for", "look up"])
 ]
 
 # ── Live-data keywords - needs web search ─────────────────────────────────────
@@ -59,7 +61,8 @@ LIVE_DATA_KEYWORDS = [
     "who won", "what happened",
     # Add general knowledge triggers to force web search instead of hallucinating facts
     "who is", "who was", "what is", "what are", "when was", "where is", "how many",
-    "founded", "history", "capital", "population"
+    "founded", "history", "capital", "population",
+    "compare", "statistics", "stats", "search", "look up", "information on", "info on", "how tall", "how old"
 ]
 
 # ── Pure-offline keywords - never needs search ────────────────────────────────
@@ -85,23 +88,32 @@ def _keyword_match(text: str) -> str | None:
 def _needs_live_data(text: str) -> bool:
     """
     Fast heuristic check - does this query need live internet data?
-    No LLM involved - just string matching.
-    Returns True only for queries that definitely need real-time info.
+    No LLM involved - just string matching using word boundaries.
     """
     t = text.lower()
+    
     # If it matches live-data keywords, definitely search
-    if any(kw in t for kw in LIVE_DATA_KEYWORDS):
-        return True
+    for kw in LIVE_DATA_KEYWORDS:
+        if re.search(rf'\b{re.escape(kw.strip())}\b', t):
+            return True
+            
     # If it matches offline keywords, never search
-    if any(kw in t for kw in OFFLINE_KEYWORDS):
-        return False
+    for kw in OFFLINE_KEYWORDS:
+        if re.search(rf'\b{re.escape(kw.strip())}\b', t):
+            return False
+            
     return False
 
 
 class IntentRouter:
     def __init__(self, memory=None):
         self.memory = memory
-        from llm.local_llm import get_answer_llm
+        from config import USE_GROQ_LLM
+        if USE_GROQ_LLM:
+            from llm.groq_llm import get_answer_llm
+        else:
+            from llm.local_llm import get_answer_llm
+            
         from research.web_search import WebSearch
         from actions.whatsapp import WhatsAppAction
         from actions.system import SystemAction
@@ -278,21 +290,34 @@ class IntentRouter:
         elif intent == "debug":
             from handlers.debug_handler import handle
             return await handle(text)
-            
         elif intent == "research":
             from handlers.pdf_handler import handle
             return handle(self.memory)  # We pass memory so the handler can save chunks
 
-        elif intent == "weather":
-            from handlers.weather import handle
-            return await handle(text)
+        elif intent == "web_search":
+            logger.info("Semantic intent triggered web search for: %s", text[:50])
+            try:
+                results = await self.web_search.search(text)
+                llm = self.cloud_llm or self.answer_llm
+                return await llm.answer_with_context(text, results, context, "")
+            except Exception as e:
+                logger.error("Web search intent failed: %s", e)
+                return "I'm having trouble searching the web right now."
 
         elif intent == "timer":
             from handlers.timer import handle
             return await handle(text)
 
+        elif intent == "weather":
+            from handlers.weather import handle
+            return await handle(text)
+
         elif intent == "notes":
             from handlers.notes import handle
+            return await handle(text)
+
+        elif intent == "schedule":
+            from handlers.scheduler import handle
             return await handle(text)
 
         elif intent == "clear_memory":
@@ -300,7 +325,7 @@ class IntentRouter:
                 self.memory.clear_all_facts()
                 self.memory.clear_context()
                 from core import websocket_bridge as ws
-                await ws.broadcast({"type": "memory", "facts": []})
+                await ws.emit({"type": "memory", "facts": []})
                 return "I have wiped my memory banks."
             return "Memory is not active."
 
@@ -371,53 +396,57 @@ class IntentRouter:
         t = text.lower()
 
         if "global" in t and "map" in t:
-            await ws.broadcast({"type": "focus_panel", "panel": "map"})
-            await ws.broadcast({"type": "map_region", "region": "global"})
+            await ws.emit({"type": "focus_panel", "panel": "map"})
+            await ws.emit({"type": "map_region", "region": "global"})
             return "Switching to global map."
 
         elif "india" in t and "map" in t:
-            await ws.broadcast({"type": "focus_panel", "panel": "map"})
-            await ws.broadcast({"type": "map_region", "region": "india"})
+            await ws.emit({"type": "focus_panel", "panel": "map"})
+            await ws.emit({"type": "map_region", "region": "india"})
             return "Switching to India map."
 
         elif "news" in t:
-            await ws.broadcast({"type": "focus_panel", "panel": "news"})
+            await ws.emit({"type": "focus_panel", "panel": "news"})
             return "Focusing on news feed."
 
         elif "charlie" in t and "focus" in t:
-            await ws.broadcast({"type": "focus_panel", "panel": "charlie"})
+            await ws.emit({"type": "focus_panel", "panel": "charlie"})
             return "Focusing on Charlie panel."
 
         elif "reset" in t or "normal" in t:
-            await ws.broadcast({"type": "reset_panels"})
+            await ws.emit({"type": "reset_panels"})
             return "Resetting panels to default."
+            
+        elif "stop" in t and ("video" in t or "youtube" in t):
+            await ws.emit({"type": "stop_video"})
+            return "Stopping video."
             
         elif "focus on" in t:
             cities = ["mumbai", "delhi", "bangalore", "pune", "chennai", "kolkata", "hyderabad", "jaipur", "ahmedabad", "surat"]
             for city in cities:
                 if city in t:
-                    await ws.broadcast({"type": "focus_panel", "panel": "map"})
-                    await ws.broadcast({"type": "map_city", "city": city})
+                    await ws.emit({"type": "focus_panel", "panel": "map"})
+                    await ws.emit({"type": "map_city", "city": city})
                     return f"Zooming map to {city.capitalize()}."
             # Fallback if city not found
-            await ws.broadcast({"type": "focus_panel", "panel": "map"})
+            await ws.emit({"type": "focus_panel", "panel": "map"})
             return "Focusing on the map."
             
         elif "theme" in t:
             if "hacker" in t or "matrix" in t:
-                await ws.broadcast({"type": "set_theme", "theme": "hacker"})
+                await ws.emit({"type": "set_theme", "theme": "hacker"})
                 return "Switching to Hacker theme."
             elif "jarvis" in t or "iron man" in t:
-                await ws.broadcast({"type": "set_theme", "theme": "jarvis"})
+                await ws.emit({"type": "set_theme", "theme": "jarvis"})
                 return "Switching to Jarvis theme."
             elif "cyberpunk" in t:
-                await ws.broadcast({"type": "set_theme", "theme": "cyberpunk"})
+                await ws.emit({"type": "set_theme", "theme": "cyberpunk"})
                 return "Switching to Cyberpunk theme."
             elif "ember" in t or "fire" in t:
-                await ws.broadcast({"type": "set_theme", "theme": "ember"})
+                await ws.emit({"type": "set_theme", "theme": "ember"})
                 return "Switching to Ember theme."
             elif "default" in t or "normal" in t or "clear" in t:
-                await ws.broadcast({"type": "set_theme", "theme": "default"})
+                await ws.emit({"type": "set_theme", "theme": "default"})
                 return "Switching to default theme."
             else:
                 return "I have Hacker, Jarvis, Cyberpunk, and Ember themes available. Which one would you like?"

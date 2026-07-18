@@ -8,74 +8,85 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     :root {
-      /* Default Modern Dark Theme */
-      --bg: radial-gradient(circle at top right, #091221, #040810);
-      --surface: rgba(7, 13, 20, 0.6);
-      --panel: rgba(10, 21, 32, 0.45);
+      /* Premium Glassmorphism Dark Theme */
+      --bg: radial-gradient(circle at top left, #12151c, #090a0f);
+      --surface: rgba(25, 28, 35, 0.6);
+      --panel: rgba(20, 22, 28, 0.7);
       --border: rgba(255, 255, 255, 0.08);
       --border2: rgba(255, 255, 255, 0.12);
-      --text: #8ab4d4;
-      --text2: #c8dff0;
-      --muted: #4a6885;
-      --accent: #00d4ff;
-      --accent2: #007aa8;
-      --green: #00ff88;
-      --red: #ff3344;
-      --yellow: #ffd740;
-      --orange: #ff8c00;
-      --purple: #cc44ff;
-      --saffron: #ff9933;
-      --mono: 'Inter', sans-serif; /* Modernized to Inter */
-      --display: 'Orbitron', monospace;
-      --body: 'Space Grotesk', sans-serif;
-      --radius: 12px;
-      --blur: blur(24px);
+      --text: #a0aec0;
+      --text2: #e2e8f0;
+      --muted: #718096;
+      --accent: #38bdf8;
+      --accent2: #0284c7;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+      --orange: #fb923c;
+      --purple: #c084fc;
+      --saffron: #fb923c;
+      --mono: 'Inter', sans-serif;
+      --display: 'Inter', sans-serif;
+      --body: 'Inter', sans-serif;
+      --radius: 16px;
+      --blur: blur(30px);
     }
 
+    /* Themes */
     body.theme-jarvis {
-      --bg: radial-gradient(circle at top right, #1a0f07, #0a0502);
-      --surface: rgba(28, 16, 10, 0.6);
-      --panel: rgba(41, 23, 14, 0.45);
-      --border: rgba(255, 150, 100, 0.1);
-      --border2: rgba(255, 150, 100, 0.2);
-      --text: #e8b090; --text2: #ffdac7; --muted: #8c5b42;
-      --accent: #ff5e00; --accent2: #cc4b00;
-      --green: #44ff00; --red: #ff1100;
+      --bg: radial-gradient(circle at center, #0a192f, #020c1b);
+      --surface: rgba(2, 12, 27, 0.7);
+      --panel: rgba(10, 25, 47, 0.8);
+      --border: rgba(100, 255, 218, 0.3);
+      --border2: rgba(100, 255, 218, 0.15);
+      --text: #8892b0;
+      --text2: #64ffda;
+      --accent: #64ffda;
+      --accent2: #14b8a6;
+      --radius: 4px;
     }
-
+    
     body.theme-hacker {
-      --bg: radial-gradient(circle at top right, #001f00, #000000);
-      --surface: rgba(0, 20, 0, 0.6);
-      --panel: rgba(0, 31, 0, 0.45);
-      --border: rgba(0, 255, 0, 0.15);
-      --border2: rgba(0, 255, 0, 0.25);
-      --text: #4dff4d; --text2: #80ff80; --muted: #008800;
-      --accent: #00ff00; --accent2: #00cc00;
+      --bg: #000000;
+      --surface: rgba(0, 20, 0, 0.8);
+      --panel: rgba(0, 10, 0, 0.9);
+      --border: #00ff00;
+      --border2: rgba(0, 255, 0, 0.3);
+      --text: #00cc00;
+      --text2: #00ff00;
+      --accent: #00ff00;
+      --accent2: #00aa00;
+      --radius: 0px;
+      --mono: 'Courier New', monospace;
     }
 
     body.theme-cyberpunk {
-      --bg: radial-gradient(circle at top right, #2a0936, #090212);
-      --surface: rgba(28, 6, 36, 0.6);
-      --panel: rgba(42, 9, 54, 0.45);
-      --border: rgba(255, 0, 255, 0.15);
-      --border2: rgba(255, 0, 255, 0.25);
-      --text: #df8cf0; --text2: #f2c9fa; --muted: #8b3c9e;
-      --accent: #ff00ff; --accent2: #cc00cc;
-      --green: #00ffcc;
+      --bg: radial-gradient(circle at bottom, #2d0a31, #05010f);
+      --surface: rgba(45, 10, 49, 0.6);
+      --panel: rgba(20, 5, 30, 0.8);
+      --border: #fcee0a;
+      --border2: rgba(252, 238, 10, 0.4);
+      --text: #ff003c;
+      --text2: #fcee0a;
+      --accent: #00f0ff;
+      --accent2: #ff003c;
+      --radius: 0px;
     }
 
     body.theme-ember {
-      --bg: radial-gradient(circle at top right, #331206, #0d0401);
-      --surface: rgba(38, 23, 15, 0.6);
-      --panel: rgba(51, 30, 20, 0.45);
-      --border: rgba(255, 85, 0, 0.12);
-      --border2: rgba(255, 85, 0, 0.2);
-      --text: #ffb380; --text2: #ffd9c2; --muted: #995533;
-      --accent: #ff5500; --accent2: #cc4400;
-      --green: #ffcc00;
+      --bg: radial-gradient(circle at top, #3f0f00, #000000);
+      --surface: rgba(40, 10, 0, 0.6);
+      --panel: rgba(20, 5, 0, 0.8);
+      --border: #ff5722;
+      --border2: rgba(255, 87, 34, 0.3);
+      --text: #ffb74d;
+      --text2: #ffcc80;
+      --accent: #ff5722;
+      --accent2: #e64a19;
+      --radius: 8px;
     }
 
     * {
@@ -135,10 +146,10 @@
 
     .h-logo {
       font-family: var(--display);
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 14px;
+      font-weight: 700;
       color: var(--accent);
-      letter-spacing: 3px;
+      letter-spacing: 1px;
       padding-right: 16px;
       border-right: 1px solid var(--border2);
       margin-right: 16px;
@@ -153,9 +164,9 @@
     .h-meta {
       display: flex;
       gap: 20px;
-      font-size: 10px;
+      font-size: 13px;
       color: var(--muted);
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       flex: 1;
     }
 
@@ -172,26 +183,26 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      font-size: 10px;
+      font-size: 13px;
     }
 
     #clock {
       font-family: var(--display);
-      font-size: 11px;
+      font-size: 14px;
       color: var(--accent);
-      letter-spacing: 2px;
+      letter-spacing: 1px;
     }
 
     /* Charlie status */
     .charlie-status {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 9px;
-      letter-spacing: 1px;
-      padding: 4px 10px;
+      gap: 8px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      padding: 6px 14px;
       border: 1px solid var(--border2);
-      border-radius: 2px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s;
     }
@@ -246,11 +257,16 @@
       flex-shrink: 0;
     }
 
+    /* Invert Google Maps to create a dark mode map */
+    .leaflet-tile {
+      filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    }
+
     #ticker-label {
-      font-size: 9px;
-      letter-spacing: 2px;
+      font-size: 11px;
+      letter-spacing: 1px;
       color: var(--accent);
-      padding: 0 10px;
+      padding: 0 16px;
       border-right: 1px solid var(--border2);
       white-space: nowrap;
       background: var(--surface);
@@ -277,11 +293,11 @@
     }
 
     .ticker-item {
-      padding: 0 16px;
-      font-size: 11px;
+      padding: 0 20px;
+      font-size: 13px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       border-right: 1px solid var(--border);
       cursor: pointer;
     }
@@ -289,6 +305,65 @@
     .ticker-item:hover {
       background: rgba(0, 212, 255, 0.05);
     }
+
+    #charlie-status-text {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Timer Widget ── */
+    #timer-widget {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(4, 8, 16, 0.9);
+      border: 1px solid var(--border1);
+      padding: 15px 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #timer-widget.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    #timer-display {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 36px;
+      color: #00d4ff;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(0,212,255,0.5);
+    }
+    #timer-display.urgent {
+      color: #ff3344;
+      text-shadow: 0 0 15px rgba(255,51,68,0.8);
+      animation: flash 1s infinite;
+    }
+    #timer-display::after {
+      content: attr(data-label);
+      display: block;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      margin-top: 5px;
+      letter-spacing: 2px;
+      text-shadow: none;
+    }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Grid Layout ── */
 
     .ticker-sym {
       color: var(--text2);
@@ -357,17 +432,16 @@
     }
 
 
-    /* Panel */
     .panel {
       display: flex;
       flex-direction: column;
-      background: var(--surface);
+      background: var(--panel);
       backdrop-filter: var(--blur);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       overflow: hidden;
-      transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, transform 0.3s;
+      transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, transform 0.3s, box-shadow 0.3s, border-color 0.3s;
       position: relative;
       min-width: 0;
     }
@@ -387,8 +461,9 @@
     }
 
     .panel-hdr {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.02);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -403,12 +478,13 @@
     }
 
     .panel-title {
-      font-size: 9px;
-      letter-spacing: 2px;
-      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--text2);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       white-space: nowrap;
     }
 
@@ -426,27 +502,28 @@
     }
 
     .panel-btn {
-      background: none;
-      border: 1px solid var(--border2);
-      color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid transparent;
+      color: var(--text);
       font-family: var(--mono);
-      font-size: 9px;
-      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
       cursor: pointer;
-      border-radius: 1px;
+      border-radius: 6px;
       transition: all 0.15s;
       white-space: nowrap;
     }
 
     .panel-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text2);
     }
 
     .panel-btn.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(0, 212, 255, 0.08);
+      background: var(--accent);
+      color: #000;
+      border-color: transparent;
     }
 
     .panel-body {
@@ -1031,6 +1108,135 @@
 
 <body>
 
+  <!-- Login/Auth Overlay -->
+  <div id="auth-overlay">
+    <div class="auth-box">
+      <div class="auth-logo">CHARLIE <span>//</span> INTEL COMMAND</div>
+      <div class="auth-subtitle">IDENTIFICATION REQUIRED</div>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="setAuthMode('login')">LOGIN</button>
+        <button class="auth-tab" id="tab-register" onclick="setAuthMode('register')">REGISTER</button>
+      </div>
+
+      <div class="auth-form">
+        <input type="text" class="auth-input" id="auth-username" placeholder="Username" />
+        <input type="password" class="auth-input" id="auth-password" placeholder="Password" />
+        <div class="auth-error" id="auth-error"></div>
+        <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">AUTHENTICATE →</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 99999; /* Highest priority */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+    .auth-box {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      padding: 40px;
+      border-radius: var(--radius);
+      box-shadow: 0 0 50px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.05);
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .auth-logo {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }
+    .auth-logo span {
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .auth-subtitle {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 4px;
+      margin-bottom: 30px;
+    }
+    .auth-tabs {
+      display: flex;
+      width: 100%;
+      border-bottom: 1px solid var(--border2);
+      margin-bottom: 20px;
+    }
+    .auth-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .auth-tab.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      background: rgba(0, 212, 255, 0.05);
+    }
+    .auth-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .auth-input {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border2);
+      padding: 12px;
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 14px;
+      border-radius: 4px;
+      outline: none;
+      transition: border 0.3s;
+    }
+    .auth-input:focus {
+      border-color: var(--accent);
+    }
+    .auth-error {
+      color: var(--red);
+      font-size: 11px;
+      text-align: center;
+      min-height: 15px;
+    }
+    .auth-submit {
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+    .auth-submit:hover {
+      background: var(--accent);
+      color: #000;
+    }
+  </style>
+
   <div id="header">
     <div class="h-logo">CHARLIE <span>//</span> INTEL COMMAND</div>
     <div class="h-meta">
@@ -1049,6 +1255,7 @@
         <span id="charlie-status-text">CHARLIE OFFLINE</span>
       </div>
       <div id="clock">--:--:-- IST</div>
+      <button onclick="logout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; margin-left: 10px; padding: 3px 8px; font-size: 10px; font-family: var(--mono); border-radius: 3px;">LOGOUT</button>
     </div>
   </div>
 
@@ -1076,6 +1283,7 @@
           <div class="news-tab active" id="tab-india" onclick="switchNewsTab('india')">INDIA</div>
           <div class="news-tab" id="tab-global" onclick="switchNewsTab('global')">GLOBAL</div>
           <div class="news-tab" id="tab-sports" onclick="switchNewsTab('sports')">SPORTS</div>
+          <div class="news-tab" id="tab-schedule" onclick="switchNewsTab('schedule')">SCHEDULE</div>
         </div>
         <div class="panel-body">
           <div class="panel-scroll" id="news-feed">
@@ -1209,17 +1417,18 @@
         <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
           <div
             style="padding:5px 8px;border-bottom:1px solid var(--border);font-size:9px;display:flex;gap:12px;flex-shrink:0;">
-            <span>STT:<span id="stt-status" style="color:var(--muted);margin-left:4px;">-</span></span>
-            <span>LLM:<span id="llm-status" style="color:var(--muted);margin-left:4px;">-</span></span>
-            <span>MEM:<span id="mem-status" style="color:var(--muted);margin-left:4px;">-</span></span>
+            <span style="display:flex;align-items:center;gap:4px;">STT:<span id="stt-status" style="color:var(--muted);">WAITING</span></span>
+            <span style="display:flex;align-items:center;gap:4px;">LLM:<span id="llm-status" style="color:var(--muted);">WAITING</span></span>
+            <span style="display:flex;align-items:center;gap:4px;">MEM:<span id="mem-status" style="color:var(--muted);">-</span></span>
+            <button onclick="document.getElementById('memory-section').style.display = document.getElementById('memory-section').style.display === 'none' ? 'block' : 'none'" style="margin-left:auto; background:transparent; border:1px solid var(--accent); color:var(--accent); border-radius:4px; padding:2px 6px; font-size:9px; cursor:pointer;">TOGGLE MEMORY</button>
           </div>
           <div class="charlie-conv" id="charlie-conv">
             <div class="ld">Waiting for Charlie...</div>
           </div>
-          <div class="memory-section">
+          <div class="memory-section" id="memory-section" style="display: none;">
             <div class="memory-title" style="display:flex; justify-content:space-between; align-items:center;">
               MEMORY
-              <button onclick="clearMemory()" style="background:var(--accent); color:var(--bg); border:none; border-radius:2px; font-size:8px; font-family:var(--display); cursor:pointer; padding:2px 6px; text-transform:uppercase;">Clear</button>
+              <button onclick="clearMemory()" style="background:var(--red); color:#fff; border:none; border-radius:4px; font-size:10px; font-family:var(--display); cursor:pointer; padding:4px 8px; text-transform:uppercase;">Clear</button>
             </div>
             <div class="memory-facts" id="memory-facts">
               <div class="memory-fact">No facts yet</div>
@@ -1253,8 +1462,7 @@
 
   <!-- Timer Widget -->
   <div id="timer-widget">
-    <div class="timer-label">TIMER</div>
-    <div id="timer-display">00:00</div>
+    <div id="timer-display" data-label="TIMER">00:00</div>
     <button class="timer-cancel-btn" onclick="cancelTimer()">✕ CANCEL</button>
   </div>
 
@@ -1395,6 +1603,7 @@
       if (/reset|normal view|show all/.test(t)) { resetPanels(); return; }
       // Content commands
       if (/open.*youtube|show.*youtube|play.*youtube/.test(t)) { focusPanel('browser'); setContentMode('yt'); return; }
+      if (/stop.*(youtube|video)|close.*(youtube|video)/.test(t)) { stopVideo(); return; }
       if (/show.*news|focus.*news/.test(t)) { focusPanel('news'); switchNewsTab('india'); return; }
       if (/open.*map|show.*map/.test(t)) { focusPanel('map'); return; }
       // URL from Charlie response
@@ -1404,7 +1613,8 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+    // Using Google Maps tiles because they accurately respect local IP borders (e.g. Kashmir in India)
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 18 }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
@@ -1454,6 +1664,18 @@
       frame.style.display = 'block';
       frame.src = url;
       document.getElementById('browser-panel-title').textContent = url.length > 35 ? url.slice(0, 35) + '...' : url;
+    }
+    
+    function stopVideo() {
+      const frame = document.getElementById('content-frame');
+      const ph = document.getElementById('content-ph');
+      if (frame) {
+          frame.src = 'about:blank';
+          frame.style.display = 'none';
+          if(ph) ph.style.display = 'flex';
+          const title = document.getElementById('browser-panel-title');
+          if(title) title.textContent = 'BROWSER';
+      }
     }
 
     function showRestrictedSite(url) {
@@ -1532,54 +1754,69 @@
       }
     }
 
-    // ── Earthquakes ───────────────────────────────────────────────────────────────
-    const eqMarkers = [];
+    // ── Weather city markers ──────────────────────────────────────────────────────
+    const CITIES = [
+      { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
+      { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
+      { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
+      { name: 'Pune', lat: 18.5204, lon: 73.8567 },
+      { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
+      { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
+      { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
+      { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
+      { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
+      { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
+    ];
 
-    async function loadEarthquakes() {
-      eqMarkers.forEach(m => map.removeLayer(m)); eqMarkers.length = 0;
+    const wxMarkers = [];
+
+    async function loadWeather() {
+      wxMarkers.forEach(m => map.removeLayer(m)); wxMarkers.length = 0;
       try {
-        const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
-        const data = await res.json();
-        const features = data.features || [];
-        
-        features.forEach(f => {
-          const coords = f.geometry.coordinates;
-          const mag = f.properties.mag;
-          if (mag == null) return;
-          
-          // Scale size by magnitude
-          const radius = Math.max(8, mag * 6);
-          const col = '#ff3344';
-          
+        const results = await Promise.all(CITIES.map(async c => {
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,windspeed_10m`);
+          const d = await r.json();
+          return { ...c, temp: Math.round(d.current.temperature_2m), wind: Math.round(d.current.windspeed_10m) };
+        }));
+
+        results.forEach(c => {
+          const col = tempColor(c.temp);
           const icon = L.divIcon({
-            html: `<div style="width:${radius}px;height:${radius}px;background:rgba(255,51,68,0.5);border:1px solid ${col};border-radius:50%;box-shadow:0 0 10px ${col};"></div>`,
-            className: '', iconAnchor: [radius/2, radius/2],
+            html: `<div style="background:${col};border:1px solid rgba(255,255,255,0.4);border-radius:3px;padding:1px 5px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#040810;font-weight:700;white-space:nowrap;box-shadow:0 0 10px ${col}88;">${c.temp}°</div>`,
+            className: '', iconAnchor: [20, 10],
           });
-          const m = L.marker([coords[1], coords[0]], { icon })
-            .bindPopup(`<b style="color:${col};">M ${mag.toFixed(1)} Earthquake</b><br>${f.properties.place}`)
+          const m = L.marker([c.lat, c.lon], { icon })
+            .bindPopup(`<b style="color:#00d4ff;">${c.name}</b><br>${c.temp}°C | ${c.wind} km/h`)
             .addTo(map);
-          eqMarkers.push(m);
+          wxMarkers.push(m);
         });
 
-        document.getElementById('city-count').textContent = `${features.length} QUAKES (1H)`;
-        document.getElementById('weather-cities').innerHTML = features.slice(0, 10).map(f =>
+        document.getElementById('city-count').textContent = `${results.length} CITIES`;
+        document.getElementById('weather-cities').innerHTML = results.map(c =>
           `<div class="wx-city">
-        <div class="wx-city-name" style="width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.properties.place.toUpperCase()}</div>
-        <div class="wx-city-temp" style="color:#ff3344;width:auto;">M ${f.properties.mag.toFixed(1)}</div>
+        <div class="wx-city-name">${c.name.substring(0, 3).toUpperCase()}</div>
+        <div class="wx-city-temp" style="color:${tempColor(c.temp)};">${c.temp > 0 ? '+' : ''}${c.temp}°</div>
+        <div class="wx-city-wind">${c.wind}km/h</div>
       </div>`
         ).join('');
-      } catch (e) { console.error('Earthquake error:', e); }
+      } catch (e) { console.error('Weather error:', e); }
     }
 
     // ── Flights ───────────────────────────────────────────────────────────────────
     const flightMarkers = [];
 
     async function loadFlights() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'get_flights', lat: 20.59, lon: 78.96 }));
+      }
+    }
+
+    function renderFlights(data) {
       try {
-        const url = encodeURIComponent('https://opensky-network.org/api/states/all?lamin=8&lomin=68&lamax=37&lomax=97');
-        const res = await fetch('https://corsproxy.io/?url=' + url);
-        if (!res.ok) throw new Error('rate limited');
-        const data = await res.json();
+        if (!data || !data.states) {
+            document.getElementById('flight-count').textContent = 'OPENSKY N/A';
+            return;
+        }
         const states = (data.states || []).filter(s => s[5] && s[6]).slice(0, 100);
         flightMarkers.forEach(m => map.removeLayer(m)); flightMarkers.length = 0;
         states.forEach(s => {
@@ -1593,7 +1830,7 @@
           flightMarkers.push(m);
         });
         document.getElementById('flight-count').textContent = `${states.length} FLIGHTS`;
-        document.getElementById('asset-count').textContent = `${states.length + eqMarkers.length} ACTIVE`;
+        document.getElementById('asset-count').textContent = `${states.length + wxMarkers.length} ACTIVE`;
       } catch (e) {
         document.getElementById('flight-count').textContent = 'OPENSKY N/A';
       }
@@ -1644,6 +1881,36 @@
         scroll.innerHTML = html + html;
       } catch (e) {
         document.getElementById('ticker-scroll').innerHTML = '<div class="ld">Markets unavailable</div>';
+      }
+    }
+
+    function renderSchedule(events) {
+      const feed = document.getElementById('news-feed');
+      if (!events || events.length === 0) {
+        feed.innerHTML = '<div class="ld">No upcoming events or tasks scheduled.</div>';
+        return;
+      }
+      
+      const html = events.map(ev => {
+        const date = new Date(ev.scheduled_time);
+        const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const dateStr = date.toLocaleDateString([], {month: 'short', day: 'numeric'});
+        
+        return `<div class="news-item" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:700; color:var(--text);">${ev.event_text}</div>
+            <div style="font-size:10px; color:var(--accent);">${dateStr} at ${timeStr}</div>
+          </div>
+          <button onclick="markScheduleDone(${ev.id}, event)" style="background:transparent; border:1px solid var(--accent); color:var(--accent); border-radius:4px; font-family:var(--display); font-size:9px; padding:4px 8px; cursor:pointer;">DONE</button>
+        </div>`;
+      }).join('');
+      feed.innerHTML = html;
+    }
+
+    function markScheduleDone(id, event) {
+      event.stopPropagation();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'mark_schedule_done', id: id }));
       }
     }
 
@@ -1713,7 +1980,15 @@
 
     async function switchNewsTab(tab) {
       currentTab = tab;
-      ['india', 'global', 'sports'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === tab));
+      ['india', 'global', 'sports', 'schedule'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('active', t === tab));
+      if (tab === 'schedule') {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'get_schedule' }));
+        } else {
+          document.getElementById('news-feed').innerHTML = '<div class="ld">Charlie Offline</div>';
+        }
+        return;
+      }
       await loadNews(tab);
     }
 
@@ -1771,48 +2046,138 @@
       return audioCtx;
     }
 
+    let charlieAudioQueue = [];
+    let charlieAudioPlaying = false;
+
     async function playCharlieAudio(base64Data) {
+      charlieAudioQueue.push(base64Data);
+      processAudioQueue();
+    }
+
+    async function processAudioQueue() {
+      if (charlieAudioPlaying || charlieAudioQueue.length === 0) {
+        if (!charlieAudioPlaying) {
+            charlieSpeaking = false;
+            document.getElementById('wf-status').textContent = 'STANDBY';
+        }
+        return;
+      }
+
+      charlieAudioPlaying = true;
+      const base64Data = charlieAudioQueue.shift();
+
       try {
+        const audioUrl = "data:audio/mp3;base64," + base64Data;
+        const audio = new Audio(audioUrl);
+        
+        // Connect to analyser for waveform
         const ac = getAudioContext();
         if (ac.state === 'suspended') await ac.resume();
+        const source = ac.createMediaElementSource(audio);
+        source.connect(analyser);
+        source.connect(ac.destination);
+        
+        window.currentAudioSource = audio; // So we can stop it if needed
+        
+        audio.onended = () => {
+          charlieAudioPlaying = false;
+          processAudioQueue();
+        };
+        
+        audio.onerror = (e) => {
+          console.error("Audio element error", e);
+          charlieAudioPlaying = false;
+          processAudioQueue();
+        };
 
-        const binaryString = window.atob(base64Data);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        const audioBuffer = await ac.decodeAudioData(bytes.buffer);
-        const source = ac.createBufferSource();
-        window.currentAudioSource = source;
-        source.buffer = audioBuffer;
-
-        source.connect(analyser); // For visualization
-        source.connect(ac.destination); // For hearing it
-
-        source.start(0);
         charlieSpeaking = true;
         document.getElementById('wf-status').textContent = 'SPEAKING';
         document.getElementById('wf-status').className = 'wf-status';
-
-        source.onended = () => {
-          charlieSpeaking = false;
-          document.getElementById('wf-status').textContent = 'STANDBY';
-        };
+        
+        await audio.play();
       } catch (e) {
         console.error('Audio playback failed', e);
+        charlieAudioPlaying = false;
+        processAudioQueue();
       }
     }
 
+    let mediaRecorder = null;
+    let audioChunks = [];
+
     async function initMic() {
+      if (micActive) return;
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const ac = getAudioContext();
         const src = ac.createMediaStreamSource(stream);
         src.connect(analyser);
         micActive = true;
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          audioChunks = [];
+          if (ws && ws.readyState === WebSocket.OPEN) {
+             ws.send(blob); // Sends binary message to websocket_bridge.py
+             document.getElementById('wf-status').textContent = 'PROCESSING';
+             document.getElementById('wf-status').className = 'wf-status speaking';
+             setCharlieStatus('online', 'PROCESSING...');
+          }
+        };
+        
+        const micBtn = document.getElementById('mic-btn');
+        micBtn.textContent = 'HOLD TO TALK';
+        micBtn.style.background = 'var(--surface)';
+        micBtn.style.color = 'var(--text2)';
+        micBtn.onclick = null; // Remove initMic click handler
+        
+        // Mouse events
+        micBtn.addEventListener('mousedown', startRecording);
+        micBtn.addEventListener('mouseup', stopRecording);
+        micBtn.addEventListener('mouseleave', stopRecording);
+        
+        // Touch events
+        micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, {passive: false});
+        micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, {passive: false});
+        
       } catch (e) { document.getElementById('wf-status').textContent = 'MIC DENIED'; }
+    }
+
+    function startRecording() {
+       if (!mediaRecorder || mediaRecorder.state === 'recording') return;
+       
+       // Interrupt Charlie if he's speaking (barge-in)
+       if (window.currentAudioSource) {
+           window.currentAudioSource.stop();
+           window.currentAudioSource = null;
+       }
+       if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'barge_in' }));
+       
+       audioChunks = [];
+       mediaRecorder.start();
+       
+       document.getElementById('wf-status').textContent = 'LISTENING';
+       document.getElementById('wf-status').className = 'wf-status listening';
+       setCharlieStatus('listening', 'LISTENING...');
+       charlieListening = true;
+       
+       const micBtn = document.getElementById('mic-btn');
+       micBtn.style.background = 'var(--accent)';
+       micBtn.style.color = 'var(--bg)';
+    }
+
+    function stopRecording() {
+       if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+       mediaRecorder.stop();
+       charlieListening = false;
+       
+       const micBtn = document.getElementById('mic-btn');
+       micBtn.style.background = 'var(--surface)';
+       micBtn.style.color = 'var(--text2)';
     }
 
     function drawWaveform() {
@@ -1881,6 +2246,33 @@
     drawWaveform();
     document.addEventListener('click', () => { if (!micActive) initMic(); }, { once: true });
 
+    // ── Authentication ────────────────────────────────────────────────────────────
+    let authMode = 'login';
+    function setAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+      document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+      document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'AUTHENTICATE →' : 'REGISTER →';
+      document.getElementById('auth-error').textContent = '';
+    }
+
+    function submitAuth() {
+      const u = document.getElementById('auth-username').value.trim();
+      const p = document.getElementById('auth-password').value.trim();
+      if (!u || !p) {
+        document.getElementById('auth-error').textContent = 'Please enter username and password.';
+        return;
+      }
+      document.getElementById('auth-submit-btn').textContent = 'PROCESSING...';
+      
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: authMode, username: u, password: p }));
+      } else {
+        document.getElementById('auth-error').textContent = 'WebSocket not connected.';
+        document.getElementById('auth-submit-btn').textContent = authMode === 'login' ? 'AUTHENTICATE →' : 'REGISTER →';
+      }
+    }
+
     // ── WebSocket ─────────────────────────────────────────────────────────────────
     let ws = null, wsRetry = 0, pendingSend = false;
 
@@ -1889,16 +2281,38 @@
         ws = new WebSocket(`ws://${window.location.hostname}:8765`);
         ws.onopen = () => {
           wsRetry = 0;
+          
+          document.getElementById('auth-overlay').style.display = 'flex';
+          
           setCharlieStatus('online', 'CHARLIE ONLINE');
           document.getElementById('charlie-conv').innerHTML = '';
-          addMsg('charlie', 'Connected. Ready.');
           document.getElementById('stt-status').textContent = 'READY';
           document.getElementById('llm-status').textContent = 'READY';
           document.getElementById('mem-status').textContent = 'ACTIVE';
         };
         ws.onmessage = e => {
           const d = JSON.parse(e.data);
-          if (d.type === 'response') {
+          if (d.type === 'login_result' || d.type === 'register_result') {
+            if (d.success) {
+              try { localStorage.setItem('charlie_user_id', d.user_id); } catch(e) {}
+              document.getElementById('auth-overlay').style.display = 'none';
+              ws.send(JSON.stringify({ type: 'authenticate', user_id: d.user_id }));
+            } else {
+              document.getElementById('auth-error').textContent = d.error || 'Authentication failed';
+              document.getElementById('auth-submit-btn').textContent = authMode === 'login' ? 'AUTHENTICATE →' : 'REGISTER →';
+            }
+          }
+          else if (d.type === 'chat_history') {
+             const conv = document.getElementById('charlie-conv');
+             conv.innerHTML = '';
+             d.history.forEach(msg => {
+                 addMsg(msg.role, msg.content);
+             });
+             if (d.history.length === 0) {
+                 addMsg('charlie', 'Connected. Ready.');
+             }
+          }
+          else if (d.type === 'response') {
             addMsg('charlie', d.text);
             handleVoiceCommand(d.text);
             setCharlieStatus('online', 'CHARLIE ONLINE');
@@ -1908,6 +2322,7 @@
             playCharlieAudio(d.data);
           }
           else if (d.type === 'stop_audio') {
+            charlieAudioQueue = [];
             if (window.currentAudioSource) {
               window.currentAudioSource.stop();
               window.currentAudioSource = null;
@@ -1956,6 +2371,12 @@
           else if (d.type === 'timer_cancel') { cancelTimer(); }
           else if (d.type === 'weather_card') { showWeatherCard(d); }
           else if (d.type === 'show_notes') { showNotes(d.notes); }
+          else if (d.type === 'flight_data') { renderFlights(d.data); }
+          else if (d.type === 'stop_video') { stopVideo(); }
+          else if (d.type === 'schedule_update') { 
+            if (currentTab === 'schedule') { switchNewsTab('schedule'); } 
+          }
+          else if (d.type === 'schedule_data') { renderSchedule(d.events); }
         };
         ws.onclose = () => {
           setCharlieStatus('offline', 'CHARLIE OFFLINE');
@@ -2019,6 +2440,12 @@
       document.getElementById('memory-facts').innerHTML = facts.map(f => `<div class="memory-fact">${f}</div>`).join('');
     }
 
+    function logout() {
+      // Reloading the page cleanly drops the websocket connection and resets all UI state
+      // Since auto-login is disabled, the user will be presented with the login screen.
+      location.reload();
+    }
+
     connectWS();
 
     // ── Keyboard shortcuts ────────────────────────────────────────────────────────
@@ -2040,6 +2467,7 @@
       if (timerInterval) clearInterval(timerInterval);
       timerEndTime = Date.now() + seconds * 1000;
       document.getElementById('timer-widget').classList.add('active');
+      document.getElementById('timer-display').dataset.label = label || 'TIMER';
       updateTimerDisplay();
       timerInterval = setInterval(updateTimerDisplay, 500);
     }
@@ -2058,6 +2486,23 @@
         timerInterval = null;
         disp.textContent = 'DONE!';
         disp.classList.add('urgent');
+        
+        // Play beep sound
+        try {
+          const actx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(800, actx.currentTime);
+          osc.frequency.setValueAtTime(1200, actx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.5, actx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1);
+          osc.start();
+          osc.stop(actx.currentTime + 1);
+        } catch(e) {}
+
         // Flash the timer widget
         document.getElementById('timer-widget').style.boxShadow = '0 0 40px rgba(255,51,68,0.8)';
         // Auto-hide after 5 seconds
@@ -2065,6 +2510,7 @@
           document.getElementById('timer-widget').classList.remove('active');
           document.getElementById('timer-widget').style.boxShadow = '';
           disp.classList.remove('urgent');
+          disp.dataset.label = '';
         }, 5000);
       }
     }
@@ -2113,11 +2559,11 @@
 
     // ── Boot ──────────────────────────────────────────────────────────────────────
     async function boot() {
-      await Promise.all([loadMarkets(), loadEarthquakes(), loadNews('india')]);
+      await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
       loadFlights();
     }
     boot();
-    setInterval(() => { loadMarkets(); loadEarthquakes(); loadNews(currentTab); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>

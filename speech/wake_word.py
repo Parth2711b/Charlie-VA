@@ -22,7 +22,8 @@ CHANNELS = 1
 RATE     = 16000
 
 # ── Wake keywords - any of these trigger activation ───────────────────────────
-WAKE_KEYWORDS = ["charlie", "charley", "charly"]
+# We include phonetically similar words because offline STT often mishears names.
+WAKE_KEYWORDS = ["charlie", "charley", "charly", "shirley", "harley", "barley", "trolley", "olly"]
 
 # ── Vosk model path ───────────────────────────────────────────────────────────
 import os
@@ -41,15 +42,7 @@ class WakeWordDetector:
         self._paused    = False
         logger.info("Wake word detector ready. Keywords: %s", WAKE_KEYWORDS)
 
-    # ── Public Interface ───────────────────────────────────────────────────────
-
-    def stop_listening(self):
-        """Signal the detection loop to exit cleanly."""
-        self._stop_requested = True
-
     def wait_for_wake_word(self) -> bool:
-        """Block until a wake keyword is detected in the audio stream. Thread-safe."""
-        # Fast path if another thread is already listening
         if getattr(self, "_is_listening", False):
             self._stop_requested = False
             while getattr(self, "_is_listening", False) and not self._stop_requested:
@@ -85,7 +78,6 @@ class WakeWordDetector:
                 try:
                     data = self._stream.read(CHUNK, exception_on_overflow=False)
                 except Exception as e:
-                    # If stream was closed externally, break gracefully
                     break
 
                 if rec.AcceptWaveform(data):
@@ -114,13 +106,14 @@ class WakeWordDetector:
                     pass
                 self._stream = None
 
+    def stop_listening(self):
+        self._stop_requested = True
+
     def pause(self):
-        """Pause detection during TTS to prevent self-trigger."""
         self._paused = True
         logger.debug("Wake word detection paused.")
 
     def resume(self):
-        """Resume detection after TTS."""
         self._paused = False
         logger.debug("Wake word detection resumed.")
 

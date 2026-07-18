@@ -17,9 +17,19 @@ CLOUD_LLM_ENABLED  = os.getenv("CLOUD_LLM_ENABLED", "false").lower() == "true"
 ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 CLOUD_MODEL        = os.getenv("CLOUD_MODEL", "claude-sonnet-4-6")
 
+USE_GROQ_LLM       = os.getenv("USE_GROQ_LLM", "true").lower() == "true"
+GROQ_API_KEY       = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL         = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_ROUTER_MODEL  = os.getenv("GROQ_ROUTER_MODEL", "llama3-8b-8192")
+
 # ── Speech ────────────────────────────────────────────────────────────────────
 WHISPER_MODEL      = os.getenv("WHISPER_MODEL", "base")        # base = good CPU balance
 WHISPER_LANGUAGE   = os.getenv("WHISPER_LANGUAGE", "en")
+USE_GROQ_STT       = os.getenv("USE_GROQ_STT", "true").lower() == "true"
+
+# Picovoice Porcupine
+PICOVOICE_ACCESS_KEY = os.getenv("PICOVOICE_ACCESS_KEY", "")
+PICOVOICE_KEYWORD_PATH = os.getenv("PICOVOICE_KEYWORD_PATH", "")
 TTS_VOICE          = os.getenv("TTS_VOICE", "en_US-lessac-high")  # Piper voice
 TTS_SPEED          = float(os.getenv("TTS_SPEED", "1.0"))
 
