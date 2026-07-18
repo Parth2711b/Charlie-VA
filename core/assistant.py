@@ -31,9 +31,11 @@ class Assistant:
         self.memory    = Memory()
         self.router    = IntentRouter(self.memory)
         self.ws        = ws
-
-        self.is_interviewing = {}  # Map of user_id -> bool
+        
         self.is_processing = False
+        self.barge_in_triggered = False
+        self.expecting_reply = False
+        self.is_interviewing = {}
         from handlers.interviewer_agent import InterviewerAgent
         self.interviewer = InterviewerAgent(self.memory)
 
@@ -101,14 +103,23 @@ class Assistant:
         while True:
             try:
                 loop = asyncio.get_event_loop()
-                detected = await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+                
+                if self.expecting_reply:
+                    detected = True
+                    self.expecting_reply = False
+                    # Give a tiny delay for audio to finish playing if any
+                    await asyncio.sleep(0.5)
+                else:
+                    detected = await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
+                
                 if detected:
                     logger.info("Wake word detected locally!")
                     self.barge_in_triggered = True
                     # Abort any playing audio on the dashboard
                     await self.ws.send_stop_audio(target_user_id=1)
-                    # Acknowledge
-                    await self._speak("Yes?")
+                    # Acknowledge only if it was an actual wake word detection
+                    if detected is not True:
+                        await self._speak("Yes?")
                     
                     # Tell dashboard we are actively recording locally
                     await self.ws.send_listening(True, target_user_id=1)
@@ -263,3 +274,8 @@ class Assistant:
             await asyncio.sleep(duration)
             
         await asyncio.sleep(0.5)
+        
+        # Auto-listen if Charlie asked a question
+        if '?' in response:
+            logger.info("Response contains a question. Auto-listening for reply.")
+            self.expecting_reply = True
