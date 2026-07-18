@@ -136,7 +136,13 @@
     }
     
     .leaflet-layer {
-      /* No filter needed for satellite hybrid map */
+      /* Base map */
+    }
+
+    .gmap-labels {
+      /* Invert Google's black text/borders to brilliant white while keeping transparent background */
+      filter: invert(100%) grayscale(100%) brightness(200%) contrast(150%);
+      pointer-events: none;
     }
 
     * {
@@ -1868,8 +1874,16 @@
 
     // ── Map ───────────────────────────────────────────────────────────────────────
     const map = L.map('map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: false, attributionControl: false });
-    // Using CartoDB Dark Matter: non-colourful, high-contrast, dark mode basemap
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+    
+    // Base layer: CartoDB Dark Matter (No Labels) - Pure dark land/water
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+    
+    // Label/Border overlay: Google Maps (Labels & Borders only), inverted to white via CSS
+    L.tileLayer('https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}', { 
+      maxZoom: 18, 
+      className: 'gmap-labels',
+      zIndex: 350
+    }).addTo(map);
 
     function setMapRegion(region, e) {
       if (e) e.stopPropagation();
