@@ -2792,23 +2792,6 @@
       loadThermal();
     });
 
-    async function loadRadar() {
-      try {
-        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-        const data = await res.json();
-        const past = data.radar.past;
-        if (past && past.length > 0) {
-          const latest = past[past.length - 1].time;
-          if (radarLayer) map.removeLayer(radarLayer);
-          radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latest}/256/{z}/{x}/{y}/2/1_1.png`, {
-            opacity: 0.65,
-            maxZoom: 18,
-            zIndex: 400
-          }).addTo(map);
-        }
-      } catch(e) { console.error('Radar error', e); }
-    }
-
     // ── Hover Weather Tooltip ────────────────────────────────────────────────────
     let hoverTimeout = null;
     const hoverTooltip = document.createElement('div');
@@ -2853,11 +2836,11 @@
     });
 
     async function boot() {
-      await Promise.all([loadMarkets(), loadWeather(), loadNews('india'), loadRadar()]);
+      await Promise.all([loadMarkets(), loadWeather(), loadNews('india')]);
       loadThermal();
     }
     boot();
-    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadRadar(); loadThermal(); }, 5 * 60 * 1000);
+    setInterval(() => { loadMarkets(); loadWeather(); loadNews(currentTab); loadThermal(); }, 5 * 60 * 1000);
     setInterval(loadFlights, 10 * 60 * 1000);
   </script>
 </body>
