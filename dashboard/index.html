@@ -135,7 +135,7 @@
       background: #000 !important;
     }
     
-    .leaflet-layer {
+    .leaflet-tile-pane {
       /* Invert Google Maps, boost contrast for black landmass, reduce brightness for subtle grey text */
       filter: grayscale(100%) invert(100%) contrast(1.4) brightness(0.7);
     }
@@ -2776,8 +2776,8 @@
 
         if (heatLayer) map.removeLayer(heatLayer);
         heatLayer = L.heatLayer(heatData, {
-          radius: Math.max(30, map.getZoom() * 10),
-          blur: Math.max(40, map.getZoom() * 10),
+          radius: 60,
+          blur: 80,
           maxZoom: 10,
           gradient: {0.1: '#0022ff', 0.3: '#00ffff', 0.5: '#00ff00', 0.7: '#ffff00', 0.9: '#ff0000'}
         }).addTo(map);
