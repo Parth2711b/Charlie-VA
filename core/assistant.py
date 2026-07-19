@@ -194,6 +194,7 @@ class Assistant:
                 await self._process(text)
             else:
                 logger.info("Dashboard audio transcription was empty.")
+                await self.ws.emit({"type": "stt_empty"})
         finally:
             try:
                 os.remove(audio_path)

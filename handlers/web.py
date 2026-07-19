@@ -61,11 +61,11 @@ async def handle(text: str) -> str:
     if use_iframe:
         logger.info("Loading URL in dashboard: %s", url)
         from core import websocket_bridge as ws
-        await ws.broadcast({"type": "load_url", "url": url, "mode": "url"})
+        await ws.emit({"type": "load_url", "url": url, "mode": "url"})
         return f"Loading {url} in the dashboard."
     else:
         logger.info("Opening URL in OS browser (iframe blocked): %s", url)
         from core import websocket_bridge as ws
-        await ws.broadcast({"type": "restricted_site", "url": url})
+        await ws.emit({"type": "restricted_site", "url": url})
         webbrowser.open(url)
         return f"Opened {url} in your browser."

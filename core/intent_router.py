@@ -49,7 +49,8 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
                     "focus charlie", "show news", "reset panels", "show dashboard", "focus on", "open the map", "open map", "change theme", "hacker theme", "jarvis theme", "cyberpunk theme", "switch theme"]),
     ("music",      ["play music", "play a song", "pause", "resume", "skip", "next track", "pause music", "resume music", "play song", "play artist"]),
     ("browser",    ["open ", "go to ", "visit ", "browse ", "load "]),
-    ("web_search", ["search the web for", "look up information about", "find online", "google this", "compare statistics", "search google for", "look up"])
+    ("web_search", ["search the web for", "look up information about", "find online", "google this", "compare statistics", "search google for", "look up"]),
+    ("conversation", ["who are you", "what is your name", "who created you", "how are you", "hello", "hi charlie", "hey charlie", "thanks", "thank you", "good morning", "goodbye"])
 ]
 
 # ── Live-data keywords - needs web search ─────────────────────────────────────
@@ -182,8 +183,8 @@ class IntentRouter:
                 # A distance closer to 0 means highly similar.
                 # 4. If the closest intent is good enough (smaller distance = better match)
                 if best_dist < 0.95:  # Tightened from 1.1 to avoid false positives
-                    if best_intent == "knowledge":
-                        # Let the LLM handle knowledge questions directly, don't route to a specific module
+                    if best_intent in ["knowledge", "conversation"]:
+                        # Let the LLM handle conversation/knowledge questions directly
                         return None
                     logger.info("Semantic match found: %s (Distance: %.2f)", best_intent, best_dist)
                     return best_intent

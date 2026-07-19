@@ -174,7 +174,7 @@ async def spotify_sync_loop():
                 
                 # Update dashboard if song or play state changed
                 if state_id != last_track_id:
-                    await ws.broadcast({
+                    await ws.emit({
                         "type": "spotify_update",
                         "data": track_info
                     })
@@ -182,7 +182,7 @@ async def spotify_sync_loop():
             else:
                 # If nothing is playing but we previously showed something, clear it
                 if last_track_id is not None:
-                    await ws.broadcast({
+                    await ws.emit({
                         "type": "spotify_update",
                         "data": None
                     })

@@ -77,7 +77,7 @@ async def handle(text: str) -> str:
     if video_id:
         embed_url = f"https://www.youtube.com/embed/{video_id}?autoplay=1&rel=0"
         logger.info("YouTube embed: %s -> %s", query, video_id)
-        await ws.broadcast({"type": "load_url", "url": embed_url, "mode": "url"})
+        await ws.emit({"type": "load_url", "url": embed_url, "mode": "url"})
         return f"Playing '{query}' on YouTube in the dashboard."
     else:
         import webbrowser

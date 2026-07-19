@@ -906,8 +906,6 @@
       backdrop-filter: blur(4px);
       transition: opacity 0.2s;
     }
-      gap: 4px;
-    }
 
     .map-stat {
       background: rgba(4, 8, 16, 0.9);
@@ -1470,7 +1468,6 @@
   </div>
 
   <div id="ticker-bar">
-    <div id="ticker-label">MKTS</div>
     <div class="ticker-scroll" id="ticker-scroll">
       <div class="ld">Loading...</div>
     </div>
@@ -2110,36 +2107,37 @@
     // ── Markets ───────────────────────────────────────────────────────────────────
     async function loadMarkets() {
       try {
-        const cgRes = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd&include_24hr_change=true',
-          { signal: AbortSignal.timeout(8000) }
-        ).catch(() => null);
+        const [cgRes, fiatRes] = await Promise.all([
+          fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr&include_24hr_change=true', { signal: AbortSignal.timeout(8000) }).catch(() => null),
+          fetch('https://api.exchangerate-api.com/v4/latest/USD', { signal: AbortSignal.timeout(5000) }).catch(() => null)
+        ]);
 
         const items = [];
-        const staticItems = [
-          { label: 'NIFTY', sym: '^NSEI', price: '-', chg: null },
-          { label: 'SENSEX', sym: '^BSESN', price: '-', chg: null },
-          { label: 'USD/INR', sym: 'INR=X', price: '-', chg: null },
-          { label: 'GOLD', sym: 'GC=F', price: '-', chg: null },
-        ];
-        staticItems.forEach(i => items.push(i));
+        
+        if (fiatRes && fiatRes.ok) {
+          const fiat = await fiatRes.json().catch(() => ({}));
+          if (fiat && fiat.rates && fiat.rates.INR) {
+            items.push({ label: '1 Dollar =', price: '\u20B9' + fiat.rates.INR.toFixed(2), chg: null });
+          }
+        }
 
         if (cgRes && cgRes.ok) {
           const cg = await cgRes.json().catch(() => ({}));
-          if (cg.bitcoin) items.push({ label: 'BTC/INR', sym: 'BTCINR', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
-          if (cg.ethereum) items.push({ label: 'ETH/INR', sym: 'ETHINR', price: '\u20B9' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
-          if (cg.solana) items.push({ label: 'SOL/INR', sym: 'SOLINR', price: '\u20B9' + Math.round(cg.solana.inr).toLocaleString('en-IN'), chg: cg.solana.inr_24h_change?.toFixed(2) });
+          if (cg.bitcoin) items.push({ label: '1 Bitcoin =', price: '\u20B9' + Math.round(cg.bitcoin.inr).toLocaleString('en-IN'), chg: cg.bitcoin.inr_24h_change?.toFixed(2) });
+          if (cg.ethereum) items.push({ label: '1 Ethereum =', price: '\u20B9' + Math.round(cg.ethereum.inr).toLocaleString('en-IN'), chg: cg.ethereum.inr_24h_change?.toFixed(2) });
+          if (cg.solana) items.push({ label: '1 Solana =', price: '\u20B9' + Math.round(cg.solana.inr).toLocaleString('en-IN'), chg: cg.solana.inr_24h_change?.toFixed(2) });
         }
+
+        if (items.length === 0) throw new Error('No data');
 
         const html = items.map(i => {
           const chg = i.chg != null ? parseFloat(i.chg) : null;
           const up = chg != null ? chg >= 0 : true;
           const chgHtml = chg != null ? `<span class="${up ? 'ticker-up' : 'ticker-down'}">${up ? '+' : ''}${chg}%</span>` : '';
-          return `<div class="ticker-item" onclick="openGraph('${i.label}','${i.sym}')">
-        <span class="ticker-sym">${i.label}</span>
-        <span class="ticker-price">${i.price || '\u2014'}</span>
+          return `<div class="ticker-item">
+        <span class="ticker-sym" style="opacity:0.7">${i.label}</span>
+        <span class="ticker-price">${i.price}</span>
         ${chgHtml}
-        <span class="ticker-chart-btn">CHART</span>
       </div>`;
         }).join('');
 
@@ -2377,17 +2375,26 @@
         const micBtn = document.getElementById('mic-btn');
         micBtn.textContent = 'HOLD TO TALK';
         micBtn.onclick = null;
-        micBtn.addEventListener('mousedown', startRecording);
-        micBtn.addEventListener('mouseup', stopRecording);
-        micBtn.addEventListener('mouseleave', stopRecording);
-        micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, {passive: false});
-        micBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); }, {passive: false});
+        
+        // Use modern Pointer Events for flawless Hold-to-Talk (prevents mouseleave glitches)
+        micBtn.addEventListener('pointerdown', (e) => {
+            try { micBtn.setPointerCapture(e.pointerId); } catch(err) {}
+            startRecording();
+        });
+        micBtn.addEventListener('pointerup', (e) => {
+            try { micBtn.releasePointerCapture(e.pointerId); } catch(err) {}
+            stopRecording();
+        });
+        micBtn.addEventListener('pointercancel', (e) => {
+            try { micBtn.releasePointerCapture(e.pointerId); } catch(err) {}
+            stopRecording();
+        });
       } catch (e) { document.getElementById('wf-status').textContent = 'MIC DENIED'; }
     }
 
     function startRecording() {
        if (!mediaRecorder || mediaRecorder.state === 'recording') return;
-       if (window.currentAudioSource) { window.currentAudioSource.stop(); window.currentAudioSource = null; }
+       if (window.currentAudioSource) { window.currentAudioSource.pause(); window.currentAudioSource.currentTime = 0; window.currentAudioSource = null; }
        if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'barge_in' }));
        audioChunks = [];
        mediaRecorder.start();
@@ -2534,10 +2541,16 @@
           else if (d.type === 'audio') {
             playCharlieAudio(d.data);
           }
-          else if (d.type === 'stop_audio') {
+          else if (d.type === 'stt_empty') {
+            document.getElementById('wf-status').textContent = 'WAITING';
+            document.getElementById('wf-status').className = 'wf-status';
+            setCharlieStatus('online', 'CHARLIE ONLINE');
+          }
+          else if (d.type === 'barge_in_ack') {
             charlieAudioQueue = [];
             if (window.currentAudioSource) {
-              window.currentAudioSource.stop();
+              window.currentAudioSource.pause();
+              window.currentAudioSource.currentTime = 0;
               window.currentAudioSource = null;
             }
           }

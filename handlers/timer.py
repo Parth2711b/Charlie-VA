@@ -39,7 +39,7 @@ async def handle(text: str) -> str:
     # Cancel timer
     if "cancel" in text_lower or "stop timer" in text_lower:
         from core import websocket_bridge as ws
-        await ws.broadcast({"type": "timer_cancel"})
+        await ws.emit({"type": "timer_cancel"})
         return "Timer cancelled."
 
     duration = _parse_duration(text)
@@ -61,7 +61,7 @@ async def handle(text: str) -> str:
     logger.info("Timer set: %d seconds (%s)", duration, label)
 
     from core import websocket_bridge as ws
-    await ws.broadcast({
+    await ws.emit({
         "type":     "timer_start",
         "seconds":  duration,
         "label":    label,

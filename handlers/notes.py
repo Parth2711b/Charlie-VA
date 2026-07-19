@@ -39,7 +39,7 @@ async def handle(text: str) -> str:
         if not notes:
             return "You have no saved notes."
         from core import websocket_bridge as ws
-        await ws.broadcast({"type": "show_notes", "notes": [n["text"] for n in notes[-10:]]})
+        await ws.emit({"type": "show_notes", "notes": [n["text"] for n in notes[-10:]]})
         latest = notes[-3:]
         summary = ". ".join(n["text"] for n in latest)
         return f"You have {len(notes)} notes. Last ones: {summary}"
@@ -48,7 +48,7 @@ async def handle(text: str) -> str:
     if any(w in text_lower for w in ["clear notes", "delete all notes", "wipe notes"]):
         _save_notes([])
         from core import websocket_bridge as ws
-        await ws.broadcast({"type": "show_notes", "notes": []})
+        await ws.emit({"type": "show_notes", "notes": []})
         return "All notes deleted."
 
     # ── Save note ──
@@ -69,7 +69,7 @@ async def handle(text: str) -> str:
             _save_notes(notes)
             logger.info("Note saved: %s", note_text)
             from core import websocket_bridge as ws
-            await ws.broadcast({"type": "show_notes", "notes": [n["text"] for n in notes[-10:]]})
+            await ws.emit({"type": "show_notes", "notes": [n["text"] for n in notes[-10:]]})
             return f"Got it, I've saved your note: '{note_text}'"
 
     return "What should I note down? Say something like 'save a note: buy milk'."

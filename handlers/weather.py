@@ -46,7 +46,7 @@ async def handle(text: str) -> str:
 
             # Broadcast a weather card to the dashboard
             from core import websocket_bridge as ws
-            await ws.broadcast({
+            await ws.emit({
                 "type": "weather_card",
                 "city": city,
                 "temp_c": temp_c,
@@ -55,7 +55,7 @@ async def handle(text: str) -> str:
                 "description": desc,
                 "wind": wind,
             })
-            await ws.broadcast({"type": "focus_panel", "panel": "map"})
+            await ws.emit({"type": "focus_panel", "panel": "map"})
 
             return (
                 f"In {city}: {desc}, {temp_c}°C, "
