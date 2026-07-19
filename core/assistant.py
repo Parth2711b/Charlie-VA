@@ -33,6 +33,7 @@ class Assistant:
         self.ws        = ws
         
         self.is_processing = False
+        self.current_response = ""
         self.barge_in_triggered = False
         self.expecting_reply = False
         self.is_interviewing = {}
@@ -53,7 +54,13 @@ class Assistant:
         if not text:
             return 0.0
             
-        user_id = self.ws.current_user_id.get() or 1
+        # Strip URLs so Charlie doesn't read them out loud letter by letter
+        import re
+        spoken_text = re.sub(r'https?://[^\s]+', '', text).strip()
+        if not spoken_text:
+            return 0.0
+            
+        user_id = self.ws.current_user_id.get(1)
         
         if self.ws.has_clients():
             logger.info("Generating Edge TTS audio for dashboard...")
@@ -63,15 +70,15 @@ class Assistant:
                 self.barge_in_triggered = False
                 return 0.0
                 
-            # Direct async generation!
-            b64_audio, duration = await self.tts.generate_audio_base64(text)
+            # Direct async generation using the stripped text!
+            b64_audio, duration = await self.tts.generate_audio_base64(spoken_text)
             if b64_audio:
                 await self.ws.send_audio(b64_audio, target_user_id=user_id)
                 
             self.barge_in_triggered = False
             return duration
         else:
-            return await self.tts.speak(text)
+            return await self.tts.speak(spoken_text)
 
     async def run(self):
         """Main entry point. Starts WebSockets and background tasks. The main loop is fully event-driven now."""
@@ -113,6 +120,10 @@ class Assistant:
                     detected = await loop.run_in_executor(None, self.wake_word.wait_for_wake_word)
                 
                 if detected:
+                    if self.is_processing and self.current_response and any(w in self.current_response.lower() for w in ['charlie', 'charley', 'charly']):
+                        logger.info("Ignoring wake word to prevent self-trigger echo since Charlie is saying his own name.")
+                        continue
+                        
                     logger.info("Wake word detected locally!")
                     self.barge_in_triggered = True
                     # Abort any playing audio on the dashboard
@@ -214,7 +225,7 @@ class Assistant:
             self.is_processing = False
 
     async def _process_inner(self, text: str):
-        user_id = self.ws.current_user_id.get() or 1
+        user_id = self.ws.current_user_id.get(1)
         
         # Reset barge-in state since we are now actively processing a new query
         self.barge_in_triggered = False
@@ -268,11 +279,17 @@ class Assistant:
 
         # ── Speak response ────────────────────────────────────────────────────
         logger.info("Responding: %s", response)
+        self.current_response = response
         
         duration = await self._speak(response)
         
         if duration > 0:
-            await asyncio.sleep(duration)
+            steps = int(duration / 0.1)
+            for _ in range(steps):
+                if self.barge_in_triggered:
+                    logger.info("TTS playback sleeping aborted due to barge-in.")
+                    break
+                await asyncio.sleep(0.1)
             
         await asyncio.sleep(0.5)
         

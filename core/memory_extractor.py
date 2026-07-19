@@ -45,7 +45,7 @@ async def extract_facts_background(user_text: str, memory):
                 if 0 < len(key) < 40 and 0 < len(val) < 150:
                     if "user" not in key and "output" not in key and "key" not in key:
                         from core import websocket_bridge as ws
-                        user_id = ws.current_user_id.get() or 1
+                        user_id = ws.current_user_id.get(1)
                         
                         memory.save_fact(user_id, key, val)
                         logger.info("[User %s] Background extractor learned a new fact -> %s: %s", user_id, key, val)

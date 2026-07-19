@@ -21,7 +21,7 @@ current_user_id: contextvars.ContextVar[int | None] = contextvars.ContextVar("cu
 
 def has_clients() -> bool:
     """Check if the CURRENT user has any active dashboard clients connected (defaults to user 1 for local commands)."""
-    uid = current_user_id.get() or 1
+    uid = current_user_id.get(1)
     return bool(uid and _clients.get(uid))
 
 def has_any_clients() -> bool:
@@ -33,7 +33,7 @@ def has_any_clients() -> bool:
 
 async def emit(message: dict, target_user_id: int | None = None):
     """Send a message to a specific user (defaults to current context user, or user 1 for local commands)."""
-    uid = target_user_id or current_user_id.get() or 1
+    uid = target_user_id or current_user_id.get(1)
     if not uid or uid not in _clients or not _clients[uid]:
         return
         

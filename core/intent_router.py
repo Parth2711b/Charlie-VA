@@ -47,7 +47,7 @@ INTENT_PATTERNS: list[tuple[str, list[str]]] = [
 
     ("dashboard",  ["show me the map", "global map", "focus news", "focus map",
                     "focus charlie", "show news", "reset panels", "show dashboard", "focus on", "open the map", "open map", "change theme", "hacker theme", "jarvis theme", "cyberpunk theme", "switch theme"]),
-    ("music",      ["play music", "play a song", "pause", "resume", "skip", "next track", "pause music", "resume music", "play song", "play artist"]),
+    ("music",      ["play music", "play a song", "pause", "resume", "skip", "next track", "pause music", "resume music", "play song", "play artist", "play something", "play a playlist", "put on some music", "play track", "play some", "play anything"]),
     ("browser",    ["open ", "go to ", "visit ", "browse ", "load "]),
     ("web_search", ["search the web for", "look up information about", "find online", "google this", "compare statistics", "search google for", "look up"]),
     ("conversation", ["who are you", "what is your name", "who created you", "how are you", "hello", "hi charlie", "hey charlie", "thanks", "thank you", "good morning", "goodbye"])

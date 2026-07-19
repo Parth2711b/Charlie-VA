@@ -2495,8 +2495,10 @@
     let ws = null, wsRetry = 0, pendingSend = false;
 
     function connectWS() {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const wsUrl = isLocal ? 'ws://localhost:8765' : 'wss://dietary-chem-debian-providers.trycloudflare.com';
+    ws = new WebSocket(wsUrl);
       try {
-        ws = new WebSocket(`ws://${window.location.hostname}:8765`);
         ws.onopen = () => {
           wsRetry = 0;
           
